@@ -1,0 +1,41 @@
+plugins {
+    id 'java'
+}
+
+group = 'io.github.cvn.cvn'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+repositories {
+    maven {
+        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+
+        content {
+            includeGroup 'org.bukkit'
+            includeGroup 'org.spigotmc'
+        }
+    }
+
+    maven { url = 'https://oss.sonatype.org/content/repositories/snapshots' }
+    maven { url = 'https://oss.sonatype.org/content/repositories/central' }
+    mavenLocal()
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+
+    implementation 'net.fabricmc:tiny-remapper:0.10.3+local'
+    implementation 'io.github.cvn:mappings-downloader:1.0-SNAPSHOT'
+
+    compileOnly 'commons-io:commons-io:2.16.1'
+    compileOnly 'org.jetbrains:annotations:24.1.0'
+    compileOnly 'org.spigotmc:spigot-api:1.20.4-R0.1-SNAPSHOT'
+}
+
+test {
+    useJUnitPlatform()
+}
