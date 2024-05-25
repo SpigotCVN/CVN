@@ -28,7 +28,7 @@ public class PluginLoader {
         this.plugin = plugin;
     }
 
-    public Pair<PluginType, @Nullable JarFile> getPluginType() {
+    public PluginType getPluginType() {
 
         try (JarFile jar = new JarFile(plugin)) {
             JarEntry cvnPluginYaml = jar.getJarEntry("cvn-plugin.yml");
@@ -36,40 +36,44 @@ public class PluginLoader {
 
             // Is a basic plugin
             if (cvnPluginYaml == null && pluginYaml != null) {
-                return Pair.of(PluginType.SPIGOT, jar);
+                return PluginType.SPIGOT;
             }
             // Is a CVN plugin
             else if (cvnPluginYaml != null && pluginYaml == null) {
-                return Pair.of(PluginType.CVN, jar);
+                return PluginType.CVN;
             }
         } catch (IOException | YAMLException ex) {
-            cvn.getLogger().severe("Cannot read plugin type for " + plugin.getName() + " !");
+            cvn.getLogger().severe("Cannot read type for " + plugin.getName() + " !");
         }
 
         // There is not a plugin.yml, neither a cvn-plugin.yml
-        return Pair.of(PluginType.NONE, null);
+        return PluginType.NONE;
     }
 
-    public void remapPlugin(Remapper remapper, JarFile jar) throws IOException {
-        // Final remapped file
+    public void remapPlugin(Remapper remapper) throws IOException {
+        // Remap from intermediary to server obfuscate and put the file as remappedPlugin
         File remappedPlugin = FileUtils.insertInFileName(plugin, " - remapped");
 
-        // Remap from intermediary to server obfuscate and put the file as remappedPlugin
         remapper.remapJarFromIntermediary(
                 Paths.get(cvn.getServer().getClass().getProtectionDomain().getCodeSource().getLocation().getPath()),
                 plugin,
                 remappedPlugin
         );
 
-        InputStream stream = jar.getInputStream(jar.getJarEntry("cvn-plugin.yml"));
+        // Edit from cvn-plugin.yml to plugin.yml
+        try (JarFile jar = new JarFile(plugin)) {
+            InputStream stream = jar.getInputStream(jar.getJarEntry("cvn-plugin.yml"));
 
-        ZipFile zipFile = new ZipFile(plugin);
-        zipFile.removeFile("cvn-plugin.yml");
+            ZipFile zipFile = new ZipFile(plugin);
+            zipFile.removeFile("cvn-plugin.yml");
 
-        ZipParameters parameters = new ZipParameters();
-        parameters.setFileNameInZip("plugin.yml");
+            ZipParameters parameters = new ZipParameters();
+            parameters.setFileNameInZip("plugin.yml");
 
-        zipFile.addStream(stream, parameters);
+            zipFile.addStream(stream, parameters);
+        } catch (IOException | YAMLException ex) {
+            cvn.getLogger().severe("Cannot manipulate jar for " + plugin.getName() + " !");
+        }
     }
 
     public void loadPlugin() throws InvalidPluginException, InvalidDescriptionException {
