@@ -7,9 +7,7 @@ version = '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
-}
 
-repositories {
     maven {
         url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
 
@@ -30,6 +28,7 @@ dependencies {
 
     implementation 'net.fabricmc:tiny-remapper:0.10.3+local'
     implementation 'io.github.cvn:mappings-downloader:1.0-SNAPSHOT'
+    implementation 'net.lingala.zip4j:zip4j:2.11.5'
 
     compileOnly 'commons-io:commons-io:2.16.1'
     compileOnly 'org.jetbrains:annotations:24.1.0'

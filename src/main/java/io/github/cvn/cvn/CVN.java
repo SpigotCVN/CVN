@@ -4,11 +4,15 @@ import io.github.cvn.cvn.loader.PluginLoader;
 import io.github.cvn.cvn.remapper.Remapper;
 import io.github.cvn.cvn.utils.FileUtils;
 import io.github.cvn.mappingsdownloader.MappingsDownloader;
+import net.fabricmc.tinyremapper.extension.mixin.common.data.Pair;
+import org.bukkit.plugin.InvalidDescriptionException;
+import org.bukkit.plugin.InvalidPluginException;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.nio.file.Paths;
+import java.io.IOException;
+import java.util.jar.JarFile;
 
 public class CVN extends JavaPlugin {
     private @Nullable File mappingFile;
@@ -30,21 +34,25 @@ public class CVN extends JavaPlugin {
         for(File file : FileUtils.listFiles(pluginsFolder)) {
             PluginLoader loader = new PluginLoader(this, file);
 
+            Pair<PluginLoader.PluginType, @Nullable JarFile> pluginType = loader.getPluginType();
+
             // If the plugin isn't a CVN plugin, skip it
-            if(loader.getPluginType() != PluginLoader.PluginType.CVN) continue;
+            if(pluginType.first() != PluginLoader.PluginType.CVN || pluginType.second() == null) continue;
 
-            // Final remapped file
-            File remappedPlugin = FileUtils.insertInFileName(file, " - remapped");
-
-            // Remap from intermediary to server obfuscate and put the file as remappedPlugin
-            remapper.remapJarFromIntermediary(
-                    Paths.get(getServer().getClass().getProtectionDomain().getCodeSource().getLocation().getPath()),
-                    file,
-                    remappedPlugin
-            );
+            try {
+                loader.remapPlugin(remapper, pluginType.second());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
 
             // Should I really explain what is this?
             getLogger().info("Successfully remapped " + file.getName() + " !");
+
+            try {
+                loader.loadPlugin();
+            } catch (InvalidPluginException | InvalidDescriptionException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         getLogger().info("Finished remapping plugins !");
