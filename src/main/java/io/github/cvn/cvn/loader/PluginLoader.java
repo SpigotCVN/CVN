@@ -39,6 +39,10 @@ public class PluginLoader {
         return PluginType.NONE;
     }
 
+    public void loadPlugin() {
+        cvn.getServer().getPluginManager().enablePlugin(new Jav);
+    }
+
     /**
      * Get the plugin involved in this loader
      * @return the plugin file (.jar)
