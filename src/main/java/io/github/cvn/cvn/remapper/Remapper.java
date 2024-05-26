@@ -49,6 +49,48 @@ public class Remapper {
         }
     }
 
+    /**
+     * Takes in an officially mapped jar (an obfuscated one) and remaps it to the intermediary mappings.
+     * @param jarFile       The jar file to remap
+     * @param resultJarFile The file to save the remapped jar to
+     */
+    public void remapJarFromIntermediary2(Path classpath, File jarFile, File resultJarFile) {
+        System.out.println("Remapping jar to obfuscated mappings...");
+
+        File mappingFile = plugin.getMappingFile();
+
+        if(mappingFile == null) throw new IllegalStateException("Could not find mapping file !");
+
+        System.out.println("Loaded mappings from: " + mappingFile.getAbsolutePath());
+
+        TinyRemapper remapper = TinyRemapper.newRemapper()
+                .withMappings(
+                        TinyUtils.createTinyMappingProvider(
+                                mappingFile.toPath(),
+                                Namespace.INTERMEDIARY.getNamespaceName(),
+                                Namespace.OBFUSCATED.getNamespaceName()
+                        )
+                )
+                .build();
+
+        try (OutputConsumerPath outputConsumer = new OutputConsumerPath.Builder(resultJarFile.toPath()).build()) {
+            outputConsumer.addNonClassFiles(jarFile.toPath(), NonClassCopyMode.FIX_META_INF, remapper);
+
+            System.out.println("Reading inputs from " + jarFile.getAbsolutePath() + "...");
+            remapper.readInputs(jarFile.toPath());
+            System.out.println("Reading classpath from " + classpath.toAbsolutePath() + "...");
+            remapper.readClassPath(classpath);
+
+            System.out.println("Remapping jar...");
+            remapper.apply(outputConsumer);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            remapper.finish();
+            System.out.println("Finished remapping jar to intermediary mappings to: " + resultJarFile.getAbsolutePath());
+        }
+    }
+
     private enum Namespace {
         INTERMEDIARY("intermediary"),
         OBFUSCATED("official");

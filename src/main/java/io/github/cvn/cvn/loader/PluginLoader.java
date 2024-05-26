@@ -2,10 +2,12 @@ package io.github.cvn.cvn.loader;
 
 import io.github.cvn.cvn.CVN;
 import io.github.cvn.cvn.remapper.Remapper;
+import io.github.cvn.cvn.utils.FileUtils;
 import net.lingala.zip4j.ZipFile;
 import org.bukkit.plugin.InvalidDescriptionException;
 import org.bukkit.plugin.InvalidPluginException;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.File;
@@ -15,7 +17,8 @@ import java.util.jar.JarFile;
 
 public class PluginLoader {
     private final CVN cvn;
-    private File plugin;
+    private final File plugin;
+    private @Nullable File remappedPlugin;
 
     public PluginLoader(CVN cvn, File plugin) {
         this.cvn = cvn;
@@ -28,8 +31,12 @@ public class PluginLoader {
             JarEntry cvnPluginYaml = jar.getJarEntry("cvn-plugin.yml");
             JarEntry pluginYaml = jar.getJarEntry("plugin.yml");
 
+            // Is a good CVN plugin
+            if(cvnPluginYaml != null && pluginYaml != null) {
+                return PluginType.CVN;
+            }
             // Is a basic plugin
-            if (cvnPluginYaml == null && pluginYaml != null) {
+            else if (cvnPluginYaml == null && pluginYaml != null) {
                 return PluginType.SPIGOT;
             }
             // Is a CVN plugin
@@ -52,21 +59,22 @@ public class PluginLoader {
 
         File classpathJar = new File(cvn.getServer().getClass().getProtectionDomain().getCodeSource().getLocation().getPath().replaceFirst("/", ""));
 
-        remapper.remapJarFromIntermediary(
+        remapper.remapJarFromIntermediary2(
                 classpathJar.toPath(),
                 plugin,
                 remappedPlugin
         );
 
-        // Edit from cvn-plugin.yml to plugin.yml
-        ZipFile zipFile = new ZipFile(remappedPlugin);
-        zipFile.renameFile("cvn-plugin.yml", "plugin.yml");
-
-        this.plugin = remappedPlugin;
+        this.remappedPlugin = FileUtils.jarToCVNJar(cvn, remappedPlugin);
     }
 
     public void loadPlugin() throws InvalidPluginException, InvalidDescriptionException {
-        Plugin loadedPlugin = cvn.getServer().getPluginManager().loadPlugin(plugin);
+        if(remappedPlugin == null) throw new InvalidPluginException("You can't load the plugin if it wasn't remapped!");
+
+        System.out.println(remappedPlugin);
+        Plugin loadedPlugin = cvn.getServer().getPluginManager().loadPlugin(remappedPlugin);
+        if(loadedPlugin == null) throw new InvalidPluginException("The remapped plugin can't be loaded!");
+
         cvn.getServer().getPluginManager().enablePlugin(loadedPlugin);
     }
 
@@ -76,6 +84,14 @@ public class PluginLoader {
      */
     public File getPlugin() {
         return plugin;
+    }
+
+    /**
+     * Get the remapped plugin created by {@link #remapPlugin(Remapper)}
+     * @return The remapped plugin file, or null if not remapped yet
+     */
+    public @Nullable File getRemappedPlugin() {
+        return remappedPlugin;
     }
 
     /**
