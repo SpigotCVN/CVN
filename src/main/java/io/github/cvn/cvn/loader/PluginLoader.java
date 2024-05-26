@@ -2,26 +2,20 @@ package io.github.cvn.cvn.loader;
 
 import io.github.cvn.cvn.CVN;
 import io.github.cvn.cvn.remapper.Remapper;
-import io.github.cvn.cvn.utils.FileUtils;
-import net.fabricmc.tinyremapper.extension.mixin.common.data.Pair;
 import net.lingala.zip4j.ZipFile;
-import net.lingala.zip4j.model.ZipParameters;
 import org.bukkit.plugin.InvalidDescriptionException;
 import org.bukkit.plugin.InvalidPluginException;
-import org.bukkit.plugin.java.JavaPlugin;
-import org.jetbrains.annotations.Nullable;
+import org.bukkit.plugin.Plugin;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Paths;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class PluginLoader {
     private final CVN cvn;
-    private final File plugin;
+    private File plugin;
 
     public PluginLoader(CVN cvn, File plugin) {
         this.cvn = cvn;
@@ -51,33 +45,31 @@ public class PluginLoader {
     }
 
     public void remapPlugin(Remapper remapper) throws IOException {
+        // TODO : fix being trying editing remapped file when it's already existing, so error
+
         // Remap from intermediary to server obfuscate and put the file as remappedPlugin
-        File remappedPlugin = FileUtils.insertInFileName(plugin, " - remapped");
+        File remappedPlugin = new File(plugin.getAbsolutePath().replace(".jar", "-remapped.jar"));
+
+        File classpathJar = new File(cvn.getServer().getClass().getProtectionDomain().getCodeSource().getLocation().getPath().replaceFirst("/", ""));
+
+        System.out.println(classpathJar);
 
         remapper.remapJarFromIntermediary(
-                Paths.get(cvn.getServer().getClass().getProtectionDomain().getCodeSource().getLocation().getPath()),
+                classpathJar.toPath(),
                 plugin,
                 remappedPlugin
         );
 
         // Edit from cvn-plugin.yml to plugin.yml
-        try (JarFile jar = new JarFile(plugin)) {
-            InputStream stream = jar.getInputStream(jar.getJarEntry("cvn-plugin.yml"));
+        ZipFile zipFile = new ZipFile(remappedPlugin);
+        zipFile.renameFile("cvn-plugin.yml", "plugin.yml");
 
-            ZipFile zipFile = new ZipFile(plugin);
-            zipFile.removeFile("cvn-plugin.yml");
-
-            ZipParameters parameters = new ZipParameters();
-            parameters.setFileNameInZip("plugin.yml");
-
-            zipFile.addStream(stream, parameters);
-        } catch (IOException | YAMLException ex) {
-            cvn.getLogger().severe("Cannot manipulate jar for " + plugin.getName() + " !");
-        }
+        this.plugin = remappedPlugin;
     }
 
     public void loadPlugin() throws InvalidPluginException, InvalidDescriptionException {
-        cvn.getServer().getPluginManager().loadPlugin(plugin);
+        Plugin loadedPlugin = cvn.getServer().getPluginManager().loadPlugin(plugin);
+        cvn.getServer().getPluginManager().enablePlugin(loadedPlugin);
     }
 
     /**
