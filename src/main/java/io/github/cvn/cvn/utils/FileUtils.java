@@ -7,6 +7,8 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -30,6 +32,17 @@ public class FileUtils {
 
     public static boolean isJar(File file) {
         return file.isFile() && FilenameUtils.getExtension(file.getName()).equals("jar");
+    }
+
+    public static String formatToGoodJarFilePath(Class<?> clasz) throws URISyntaxException {
+        // Get the location of the class file of the main class
+        String path = clasz.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
+
+        // Convert the path to a file to get a normalized version
+        File jarFile = new File(path);
+
+        // Get the absolute path of the JAR file
+        return jarFile.getAbsolutePath();
     }
 
     public static File jarToCVNJar(CVN plugin, File remappedPlugin) throws IOException {

@@ -3,7 +3,6 @@ package io.github.cvn.cvn.loader;
 import io.github.cvn.cvn.CVN;
 import io.github.cvn.cvn.remapper.Remapper;
 import io.github.cvn.cvn.utils.FileUtils;
-import net.lingala.zip4j.ZipFile;
 import org.bukkit.plugin.InvalidDescriptionException;
 import org.bukkit.plugin.InvalidPluginException;
 import org.bukkit.plugin.Plugin;
@@ -12,6 +11,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -40,7 +40,7 @@ public class PluginLoader {
                 return PluginType.SPIGOT;
             }
             // Is a CVN plugin
-            else if (cvnPluginYaml != null && pluginYaml == null) {
+            else if (cvnPluginYaml != null) {
                 return PluginType.CVN;
             }
         } catch (IOException | YAMLException ex) {
@@ -51,15 +51,15 @@ public class PluginLoader {
         return PluginType.NONE;
     }
 
-    public void remapPlugin(Remapper remapper) throws IOException {
+    public void remapPlugin(Remapper remapper) throws IOException, URISyntaxException {
         // TODO : fix being trying editing remapped file when it's already existing, so error
 
         // Remap from intermediary to server obfuscate and put the file as remappedPlugin
         File remappedPlugin = new File(plugin.getAbsolutePath().replace(".jar", "-remapped.jar"));
 
-        File classpathJar = new File(cvn.getServer().getClass().getProtectionDomain().getCodeSource().getLocation().getPath().replaceFirst("/", ""));
+        File classpathJar = new File(FileUtils.formatToGoodJarFilePath(cvn.getServer().getClass()));
 
-        remapper.remapJarFromIntermediary2(
+        remapper.remapJarFromIntermediary(
                 classpathJar.toPath(),
                 plugin,
                 remappedPlugin
@@ -71,7 +71,6 @@ public class PluginLoader {
     public void loadPlugin() throws InvalidPluginException, InvalidDescriptionException {
         if(remappedPlugin == null) throw new InvalidPluginException("You can't load the plugin if it wasn't remapped!");
 
-        System.out.println(remappedPlugin);
         Plugin loadedPlugin = cvn.getServer().getPluginManager().loadPlugin(remappedPlugin);
         if(loadedPlugin == null) throw new InvalidPluginException("The remapped plugin can't be loaded!");
 

@@ -22,39 +22,6 @@ public class Remapper {
      * @param resultJarFile The file to save the remapped jar to
      */
     public void remapJarFromIntermediary(Path classpath, File jarFile, File resultJarFile) {
-        File mappingFile = plugin.getMappingFile();
-
-        if(mappingFile == null) throw new IllegalStateException("Could not find mapping file !");
-
-        TinyRemapper remapper = TinyRemapper.newRemapper()
-                .withMappings(
-                        TinyUtils.createTinyMappingProvider(
-                                mappingFile.toPath(),
-                                Namespace.INTERMEDIARY.getNamespaceName(),
-                                Namespace.OBFUSCATED.getNamespaceName()
-                        )
-                ).build();
-
-        try (OutputConsumerPath outputConsumer = new OutputConsumerPath.Builder(resultJarFile.toPath()).build()) {
-            outputConsumer.addNonClassFiles(jarFile.toPath(), NonClassCopyMode.FIX_META_INF, remapper);
-
-            remapper.readInputs(jarFile.toPath());
-            remapper.readClassPath(classpath);
-
-            remapper.apply(outputConsumer);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            remapper.finish();
-        }
-    }
-
-    /**
-     * Takes in an intermediary mapped jar and remaps it to an official mapped jar (an obfuscated one).
-     * @param jarFile       The jar file to remap
-     * @param resultJarFile The file to save the remapped jar to
-     */
-    public void remapJarFromIntermediary2(Path classpath, File jarFile, File resultJarFile) {
         System.out.println("Remapping jar to obfuscated mappings...");
 
         File mappingFile = plugin.getMappingFile();

@@ -11,13 +11,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 
-public class CVN extends JavaPlugin {
+public final class CVN extends JavaPlugin {
     private @Nullable File mappingFile;
 
     @Override
     public void onEnable() {
         getLogger().info("Enabled!");
+
         saveDefaultConfig();
 
         MappingsDownloader mappingsDownloader = new MappingsDownloader(this, getConfig());
@@ -37,7 +39,7 @@ public class CVN extends JavaPlugin {
 
             try {
                 loader.remapPlugin(remapper);
-            } catch (IOException e) {
+            } catch (IOException | URISyntaxException e) {
                 throw new RuntimeException(e);
             }
 
