@@ -50,7 +50,7 @@ public class Remapper {
     }
 
     /**
-     * Takes in an officially mapped jar (an obfuscated one) and remaps it to the intermediary mappings.
+     * Takes in an intermediary mapped jar and remaps it to an official mapped jar (an obfuscated one).
      * @param jarFile       The jar file to remap
      * @param resultJarFile The file to save the remapped jar to
      */
@@ -87,7 +87,7 @@ public class Remapper {
             throw new RuntimeException(e);
         } finally {
             remapper.finish();
-            System.out.println("Finished remapping jar to intermediary mappings to: " + resultJarFile.getAbsolutePath());
+            System.out.println("Finished remapping jar from intermediary mappings to: " + resultJarFile.getAbsolutePath());
         }
     }
 
