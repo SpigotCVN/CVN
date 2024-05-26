@@ -31,10 +31,13 @@ dependencies {
     implementation 'net.fabricmc:tiny-remapper:0.10.3+local'
     implementation 'io.github.cvn:mappings-downloader:1.0-SNAPSHOT'
     implementation 'net.lingala.zip4j:zip4j:2.11.5'
-    implementation 'commons-io:commons-io:2.16.1'
 
     compileOnly 'org.jetbrains:annotations:24.1.0'
     compileOnly 'org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT'
+}
+
+shadowJar {
+    relocate 'org.objectweb.asm', 'io.github.cvn.asm'
 }
 
 test {

@@ -1,7 +1,5 @@
 package io.github.cvn.cvn.utils;
 
-import org.apache.commons.io.FilenameUtils;
-
 import java.io.File;
 import java.util.Set;
 import java.util.stream.Collectors;

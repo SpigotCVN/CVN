@@ -52,8 +52,6 @@ public class PluginLoader {
 
         File classpathJar = new File(cvn.getServer().getClass().getProtectionDomain().getCodeSource().getLocation().getPath().replaceFirst("/", ""));
 
-        System.out.println(classpathJar);
-
         remapper.remapJarFromIntermediary(
                 classpathJar.toPath(),
                 plugin,
