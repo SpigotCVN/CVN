@@ -1,6 +1,7 @@
 package io.github.cvn.cvn.version;
 
 import org.bukkit.Bukkit;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -8,6 +9,9 @@ import java.util.regex.Pattern;
 public class Version {
     private final int major, minor, patch;
 
+    /**
+     * Get the actual server version
+     */
     public Version() {
         String version = Bukkit.getVersion();
         String mcVersion;
@@ -19,7 +23,7 @@ public class Version {
         } else {
             throw new RuntimeException("Could not determine Minecraft version from Bukkit.getVersion(): " + version);
         }
-        
+
         String[] mcParts = mcVersion.split("\\.");
 
         this.major = Integer.parseInt(mcParts[0]);
@@ -27,13 +31,19 @@ public class Version {
         this.patch = Integer.parseInt(mcParts[2]);
     }
 
+    /**
+     * Get a version instance based on the given arguments
+     * @param major
+     * @param minor
+     * @param patch
+     */
     public Version(int major, int minor, int patch){
         this.major = major;
         this.minor = minor;
         this.patch = patch;
     }
 
-    public Version(String version) {
+    public Version(@NotNull String version) {
         String[] split = version.split("\\.");
         if (split.length < 3) {
             throw new IllegalArgumentException("Invalid version string " + version);
@@ -69,7 +79,7 @@ public class Version {
     /**
      * 1.19.4 -> 4
      *
-     * @return the revision
+     * @return the patch
      */
     public int getPatch() {
         return patch;
