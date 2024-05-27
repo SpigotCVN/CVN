@@ -2,13 +2,24 @@ package io.github.cvn.cvn.version;
 
 import org.bukkit.Bukkit;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class Version {
     private final int major, minor, patch;
 
     public Version() {
         String version = Bukkit.getVersion();
+        String mcVersion;
 
-        String mcVersion = version.substring(version.indexOf("MC: ") + 4, version.length() - 1);
+        Matcher matcher = Pattern.compile("\\(MC: (?<version>[\\d]+\\.[\\d]+(\\.[\\d]+)?)\\)").matcher(version);
+
+        if (matcher.find()) {
+            mcVersion = matcher.group("version");
+        } else {
+            throw new RuntimeException("Could not determine Minecraft version from Bukkit.getVersion(): " + version);
+        }
+        
         String[] mcParts = mcVersion.split("\\.");
 
         this.major = Integer.parseInt(mcParts[0]);
