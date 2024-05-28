@@ -1,6 +1,6 @@
-package io.github.cvn.cvn.utils;
+package io.github.spigotcvn.cvn.utils;
 
-import io.github.cvn.cvn.CVN;
+import io.github.spigotcvn.cvn.CVN;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.model.ZipParameters;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -8,7 +8,6 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;

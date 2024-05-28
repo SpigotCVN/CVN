@@ -1,9 +1,9 @@
-package io.github.cvn.cvn;
+package io.github.spigotcvn.cvn;
 
-import io.github.cvn.cvn.loader.PluginLoader;
-import io.github.cvn.cvn.remapper.Remapper;
-import io.github.cvn.cvn.utils.FileUtils;
-import io.github.cvn.mappingsdownloader.MappingsDownloader;
+import io.github.spigotcvn.cvn.loader.PluginLoader;
+import io.github.spigotcvn.cvn.remapper.Remapper;
+import io.github.spigotcvn.cvn.utils.FileUtils;
+import io.github.spigotcvn.mappingsdownloader.MappingsDownloader;
 import org.bukkit.plugin.InvalidDescriptionException;
 import org.bukkit.plugin.InvalidPluginException;
 import org.bukkit.plugin.java.JavaPlugin;

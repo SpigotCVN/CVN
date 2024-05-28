@@ -1,4 +1,4 @@
-package io.github.cvn.cvn.utils;
+package io.github.spigotcvn.cvn.utils;
 
 import org.bukkit.Bukkit;
 

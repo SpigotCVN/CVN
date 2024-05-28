@@ -1,4 +1,4 @@
 name: CVN
 version: 1.0
-main: io.github.cvn.cvn.CVN
+main: io.github.spigotcvn.cvn.CVN
 load: STARTUP

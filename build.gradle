@@ -3,7 +3,7 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
-group = 'io.github.cvn.cvn'
+group = 'io.github.spigotcvn'
 version = '1.0-SNAPSHOT'
 
 repositories {
@@ -29,7 +29,7 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
 
     implementation 'net.fabricmc:tiny-remapper:0.10.3+local'
-    implementation 'io.github.cvn:mappings-downloader:1.0-SNAPSHOT'
+    implementation 'io.github.spigotcvn:mappings-downloader:1.0-SNAPSHOT'
     implementation 'net.lingala.zip4j:zip4j:2.11.5'
 
     compileOnly 'org.jetbrains:annotations:24.1.0'
@@ -41,7 +41,7 @@ build {
 }
 
 shadowJar {
-    relocate 'org.objectweb.asm', 'io.github.cvn.asm'
+    relocate 'org.objectweb.asm', 'io.github.spigotcvn.libs.asm'
 }
 
 test {

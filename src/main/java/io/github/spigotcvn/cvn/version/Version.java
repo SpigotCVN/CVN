@@ -1,4 +1,4 @@
-package io.github.cvn.cvn.version;
+package io.github.spigotcvn.cvn.version;
 
 import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
@@ -10,7 +10,7 @@ public class Version {
     private final int major, minor, patch;
 
     /**
-     * Get the actual server version
+     * Get the actual server version using bukkit
      */
     public Version() {
         String version = Bukkit.getVersion();
@@ -33,9 +33,6 @@ public class Version {
 
     /**
      * Get a version instance based on the given arguments
-     * @param major
-     * @param minor
-     * @param patch
      */
     public Version(int major, int minor, int patch){
         this.major = major;
@@ -43,6 +40,9 @@ public class Version {
         this.patch = patch;
     }
 
+    /**
+     * Get a version instance based on a string like "1.20.4"
+     */
     public Version(@NotNull String version) {
         String[] split = version.split("\\.");
         if (split.length < 3) {

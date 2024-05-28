@@ -1,4 +1,4 @@
-package io.github.cvn.cvn.asm;
+package io.github.spigotcvn.cvn.asm;
 
 import org.bukkit.Bukkit;
 import org.objectweb.asm.commons.Remapper;
@@ -14,7 +14,7 @@ public class CustomRemapper extends Remapper {
     @Override
     public String map(String internalName) {
         if (internalName.matches("org\\/bukkit\\/craftbukkit\\/(.*?)\\/")) {
-            return internalName.replaceFirst("org\\/bukkit\\/craftbukkit\\/(.*?)\\/", newVersion);
+            //return internalName.replaceFirst("org\\/bukkit\\/craftbukkit\\/(.*?)\\/", newVersion);
         }
         return internalName;
     }
