@@ -50,7 +50,7 @@ public class PluginLoader {
             cvn.getLogger().severe("Cannot read type for " + plugin.getName() + " !");
         }
 
-        // There is not a plugin.yml, neither a cvn-plugin.yml
+        // There is no plugin.yml, neither a cvn-plugin.yml
         return PluginType.NONE;
     }
 
