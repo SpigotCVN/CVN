@@ -1,6 +1,8 @@
 package io.github.spigotcvn.cvn.utils;
 
+import io.github.spigotcvn.cvn.version.Version;
 import org.bukkit.Bukkit;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,7 +28,7 @@ public class CompatiblityUtils {
      *
      * @return Minecraft version
      */
-    private String getMinecraftVersion() {
+    public static String getMinecraftVersion() {
         if (minecraftVersion != null) {
             return minecraftVersion;
         } else {
@@ -38,5 +40,27 @@ public class CompatiblityUtils {
                 throw new RuntimeException("Could not determine Minecraft version from Bukkit.getVersion(): " + bukkitGetVersionOutput);
             }
         }
+    }
+
+    /**
+     * Returns the old CraftBukkit location, no longer here after <b>Paper</b> 1.20.5
+     * @return Something like v1_20_R3 or null if it is not relocated
+     */
+    public static @Nullable String getCBOldNotation() {
+        if(isNewCBPackages()) return null;
+        String craftBukkitPackage = Bukkit.getServer().getClass().getPackage().getName();
+        try {
+            return craftBukkitPackage.substring(craftBukkitPackage.lastIndexOf('.') + 1);
+        } catch (IndexOutOfBoundsException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Check if the server use the new Paper 1.20.5 craftbukkit package location.
+     */
+    public static boolean isNewCBPackages() {
+        Version cbRelocated = new Version(1, 20, 5);
+        return new Version().isAfterOrEqual(cbRelocated) && isPaperBased();
     }
 }

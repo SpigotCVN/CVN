@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 
 public final class CVN extends JavaPlugin {
+    private String tempFolder;
     private @Nullable File mappingFile;
 
     @Override
@@ -21,6 +22,8 @@ public final class CVN extends JavaPlugin {
         getLogger().info("Enabled!");
 
         saveDefaultConfig();
+
+        tempFolder = getDataFolder().getAbsolutePath() + "/temp";
 
         MappingsDownloader mappingsDownloader = new MappingsDownloader(this, getConfig());
         mappingFile = mappingsDownloader.tryDownload();
@@ -31,7 +34,7 @@ public final class CVN extends JavaPlugin {
 
         File pluginsFolder = new File(getDataFolder().getParent());
 
-        for(File file : FileUtils.listFiles(pluginsFolder)) {
+        for(File file : FileUtils.listJarFilesNotRemapped(pluginsFolder)) {
             PluginLoader loader = new PluginLoader(this, file);
 
             // If the plugin isn't a CVN plugin, skip it
@@ -59,5 +62,9 @@ public final class CVN extends JavaPlugin {
 
     public @Nullable File getMappingFile() {
         return mappingFile;
+    }
+
+    public String getTempFolder() {
+        return tempFolder;
     }
 }

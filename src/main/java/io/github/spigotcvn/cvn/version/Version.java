@@ -85,6 +85,26 @@ public class Version {
         return patch;
     }
 
+    private int getComparable() {
+        return Integer.parseInt("" + major + minor + patch);
+    }
+
+    public boolean isEqual(Version version) {
+        return getComparable() == version.getComparable();
+    }
+
+    public boolean isBefore(Version version) {
+        return getComparable() < version.getComparable();
+    }
+
+    public boolean isBeforeOrEqual(Version version) {
+        return getComparable() <= version.getComparable();
+    }
+
+    public boolean isAfterOrEqual(Version version) {
+        return getComparable() >= version.getComparable();
+    }
+
     @Override
     public String toString() {
         return getMajor() + "." + getMinor() + "." + getPatch();

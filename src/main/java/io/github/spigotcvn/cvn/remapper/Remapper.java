@@ -22,13 +22,13 @@ public class Remapper {
      * @param resultJarFile The file to save the remapped jar to
      */
     public void remapJarFromIntermediary(Path classpath, File jarFile, File resultJarFile) {
-        System.out.println("Remapping jar to obfuscated mappings...");
+        plugin.getLogger().info("Remapping jar to obfuscated mappings...");
 
         File mappingFile = plugin.getMappingFile();
 
         if(mappingFile == null) throw new IllegalStateException("Could not find mapping file !");
 
-        System.out.println("Loaded mappings from: " + mappingFile.getAbsolutePath());
+        plugin.getLogger().info("Loaded mappings from: " + mappingFile.getAbsolutePath());
 
         TinyRemapper remapper = TinyRemapper.newRemapper()
                 .withMappings(
@@ -43,18 +43,18 @@ public class Remapper {
         try (OutputConsumerPath outputConsumer = new OutputConsumerPath.Builder(resultJarFile.toPath()).build()) {
             outputConsumer.addNonClassFiles(jarFile.toPath(), NonClassCopyMode.FIX_META_INF, remapper);
 
-            System.out.println("Reading inputs from " + jarFile.getAbsolutePath() + "...");
+            plugin.getLogger().info("Reading inputs from " + jarFile.getAbsolutePath() + "...");
             remapper.readInputs(jarFile.toPath());
-            System.out.println("Reading classpath from " + classpath.toAbsolutePath() + "...");
+            plugin.getLogger().info("Reading classpath from " + classpath.toAbsolutePath() + "...");
             remapper.readClassPath(classpath);
 
-            System.out.println("Remapping jar...");
+            plugin.getLogger().info("Remapping jar...");
             remapper.apply(outputConsumer);
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
             remapper.finish();
-            System.out.println("Finished remapping jar from intermediary mappings to: " + resultJarFile.getAbsolutePath());
+            plugin.getLogger().info("Finished remapping jar from intermediary mappings to: " + resultJarFile.getAbsolutePath());
         }
     }
 

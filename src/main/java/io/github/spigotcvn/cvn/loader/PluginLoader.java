@@ -3,6 +3,9 @@ package io.github.spigotcvn.cvn.loader;
 import io.github.spigotcvn.cvn.CVN;
 import io.github.spigotcvn.cvn.remapper.Remapper;
 import io.github.spigotcvn.cvn.utils.FileUtils;
+import net.lingala.zip4j.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.model.ZipParameters;
 import org.bukkit.plugin.InvalidDescriptionException;
 import org.bukkit.plugin.InvalidPluginException;
 import org.bukkit.plugin.Plugin;
@@ -52,8 +55,6 @@ public class PluginLoader {
     }
 
     public void remapPlugin(Remapper remapper) throws IOException, URISyntaxException {
-        // TODO : fix being trying editing remapped file when it's already existing, so error
-
         // Remap from intermediary to server obfuscate and put the file as remappedPlugin
         File remappedPlugin = new File(plugin.getAbsolutePath().replace(".jar", "-remapped.jar"));
 
@@ -66,6 +67,25 @@ public class PluginLoader {
         );
 
         this.remappedPlugin = FileUtils.jarToCVNJar(cvn, remappedPlugin);
+
+        FileUtils.remapCraftBukkitImports(cvn, remappedPlugin).forEach(((file, path) -> {
+            ZipFile zipFile = new ZipFile(remappedPlugin);
+
+            try {
+                zipFile.removeFile(file.getName());
+            } catch (ZipException e) {
+                throw new RuntimeException(e);
+            }
+
+            ZipParameters parameters = new ZipParameters();
+            parameters.setDefaultFolderPath("/test/" + path.substring(0, path.lastIndexOf("/")));
+
+            try {
+                zipFile.addFile(file, parameters);
+            } catch (ZipException e) {
+                throw new RuntimeException(e);
+            }
+        }));
     }
 
     public void loadPlugin() throws InvalidPluginException, InvalidDescriptionException {

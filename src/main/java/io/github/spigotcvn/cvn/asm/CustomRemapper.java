@@ -1,20 +1,22 @@
 package io.github.spigotcvn.cvn.asm;
 
-import org.bukkit.Bukkit;
+import io.github.spigotcvn.cvn.utils.CompatiblityUtils;
 import org.objectweb.asm.commons.Remapper;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class CustomRemapper extends Remapper {
-    private final String CRAFTBUKKIT_PACKAGE = Bukkit.getServer().getClass().getPackage().getName();
-    private final String CRAFTBUKKIT_VERSION = CRAFTBUKKIT_PACKAGE.substring(CRAFTBUKKIT_PACKAGE.lastIndexOf('.') + 1);
-
-    public CustomRemapper() {
-
-    }
-
     @Override
     public String map(String internalName) {
-        if (internalName.matches("org\\/bukkit\\/craftbukkit\\/(.*?)\\/")) {
-            //return internalName.replaceFirst("org\\/bukkit\\/craftbukkit\\/(.*?)\\/", newVersion);
+        Pattern pattern = Pattern.compile("org/bukkit/craftbukkit/([^/]+)/.*");
+        Matcher matcher = pattern.matcher(internalName);
+
+        if (matcher.matches()) {
+            String cbLocation = CompatiblityUtils.getCBOldNotation();
+            if(cbLocation == null) return internalName;
+
+            return internalName.replaceFirst(matcher.group(1), cbLocation);
         }
         return internalName;
     }
