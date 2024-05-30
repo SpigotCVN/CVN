@@ -2,12 +2,14 @@ package io.github.spigotcvn.cvn;
 
 import io.github.spigotcvn.cvn.loader.PluginLoader;
 import io.github.spigotcvn.cvn.remapper.Remapper;
+import io.github.spigotcvn.cvn.utils.CompatiblityUtils;
 import io.github.spigotcvn.cvn.utils.FileUtils;
 import io.github.spigotcvn.mappingsdownloader.MappingsDownloader;
 import org.bukkit.plugin.InvalidDescriptionException;
 import org.bukkit.plugin.InvalidPluginException;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
+import org.stianloader.picoresolve.version.MavenVersion;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,10 +18,13 @@ import java.net.URISyntaxException;
 public final class CVN extends JavaPlugin {
     private String tempFolder;
     private @Nullable File mappingFile;
+    private MavenVersion actualVersion;
 
     @Override
     public void onEnable() {
         getLogger().info("Enabled!");
+
+        actualVersion = MavenVersion.parse(CompatiblityUtils.getMinecraftVersion());
 
         saveDefaultConfig();
 
@@ -58,6 +63,10 @@ public final class CVN extends JavaPlugin {
         }
 
         getLogger().info("Finished remapping plugins !");
+    }
+
+    public MavenVersion getActualVersion() {
+        return actualVersion;
     }
 
     public @Nullable File getMappingFile() {

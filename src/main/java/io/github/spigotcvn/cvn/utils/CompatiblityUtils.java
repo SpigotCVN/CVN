@@ -1,8 +1,9 @@
 package io.github.spigotcvn.cvn.utils;
 
-import io.github.spigotcvn.cvn.version.Version;
+import io.github.spigotcvn.cvn.CVN;
 import org.bukkit.Bukkit;
 import org.jetbrains.annotations.Nullable;
+import org.stianloader.picoresolve.version.MavenVersion;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -46,8 +47,8 @@ public class CompatiblityUtils {
      * Returns the old CraftBukkit location, no longer here after <b>Paper</b> 1.20.5
      * @return Something like v1_20_R3 or null if it is not relocated
      */
-    public static @Nullable String getCBOldNotation() {
-        if(isNewCBPackages()) return null;
+    public static @Nullable String getCBOldNotation(CVN plugin) {
+        if(isNewCBPackages(plugin)) return null;
         String craftBukkitPackage = Bukkit.getServer().getClass().getPackage().getName();
         try {
             return craftBukkitPackage.substring(craftBukkitPackage.lastIndexOf('.') + 1);
@@ -59,8 +60,8 @@ public class CompatiblityUtils {
     /**
      * Check if the server use the new Paper 1.20.5 craftbukkit package location.
      */
-    public static boolean isNewCBPackages() {
-        Version cbRelocated = new Version(1, 20, 5);
-        return new Version().isAfterOrEqual(cbRelocated) && isPaperBased();
+    public static boolean isNewCBPackages(CVN plugin) {
+        MavenVersion cbRelocated = MavenVersion.parse("1.20.5");
+        return plugin.getActualVersion().isNewerThan(cbRelocated) && isPaperBased();
     }
 }

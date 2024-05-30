@@ -13,6 +13,7 @@ import org.stianloader.picoresolve.internal.JavaInterop;
 /**
  * Object that represents a version that maven can understand and compare.
  * Based on <a href="https://maven.apache.org/pom.html#version-order-specification">https://maven.apache.org/pom.html#version-order-specification</a>
+ * @author geol
  */
 public class MavenVersion implements Comparable<MavenVersion> {
 

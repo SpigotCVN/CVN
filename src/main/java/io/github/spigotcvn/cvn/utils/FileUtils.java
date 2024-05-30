@@ -140,7 +140,7 @@ public class FileUtils {
         List<File> files = FileUtils.getClassFiles(extractFolder);
 
         for(File file : files) {
-            CustomRemapper remapper = new CustomRemapper();
+            CustomRemapper remapper = new CustomRemapper(plugin);
             fileStringMap.put(file, AsmWriter.writeAsm(file, remapper));
         }
 
