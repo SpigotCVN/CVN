@@ -21,7 +21,14 @@ public class CustomRemapper extends Remapper {
 
         if (matcher.matches()) {
             String cbLocation = CompatiblityUtils.getCBOldNotation(plugin);
-            if(cbLocation == null) return internalName;
+            System.out.println(cbLocation);
+            System.out.println(internalName.replaceFirst(String.valueOf(internalName.charAt(internalName.indexOf(matcher.group(1))+1)), "").replaceFirst(matcher.group(1), ""));
+
+            if(cbLocation == null) return internalName // For 1.20.5+ :
+                    .replaceFirst(String.valueOf(
+                                    internalName.charAt(internalName.indexOf(matcher.group(1))+1)
+                    ), "") // Remove point after CB package notation
+                    .replaceFirst(matcher.group(1), ""); // Remove cb notation
 
             return internalName.replaceFirst(matcher.group(1), cbLocation);
         }
