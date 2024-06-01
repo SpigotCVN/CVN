@@ -3,6 +3,7 @@ package io.github.spigotcvn.cvn.utils;
 import io.github.spigotcvn.cvn.CVN;
 import io.github.spigotcvn.cvn.asm.AsmWriter;
 import io.github.spigotcvn.cvn.asm.CustomRemapper;
+import net.fabricmc.tinyremapper.extension.mixin.common.data.Pair;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.model.ZipParameters;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -120,7 +121,7 @@ public class FileUtils {
         return remappedPlugin;
     }
 
-    public static Map<File, String> remapCraftBukkitImports(CVN plugin, File zipFile) throws IOException {
+    public static Pair<Map<File, String>, File> remapCraftBukkitImports(CVN plugin, File zipFile) throws IOException {
         plugin.getLogger().info("Mapping CraftBukkit imports...");
 
         ZipFile zip = new ZipFile(zipFile);
@@ -144,6 +145,6 @@ public class FileUtils {
             fileStringMap.put(file, AsmWriter.writeAsm(file, remapper));
         }
 
-        return fileStringMap;
+        return Pair.of(fileStringMap, extractFolder);
     }
 }
