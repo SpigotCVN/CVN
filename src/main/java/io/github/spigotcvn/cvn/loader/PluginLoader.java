@@ -1,9 +1,10 @@
 package io.github.spigotcvn.cvn.loader;
 
 import io.github.spigotcvn.cvn.CVN;
-import io.github.spigotcvn.cvn.remapper.Remapper;
+import io.github.spigotcvn.cvn.remapper.Mappings;
 import io.github.spigotcvn.cvn.utils.FileUtils;
 import io.github.spigotcvn.cvn.utils.JarUtil;
+import io.github.spigotcvn.merger.MappingMerger;
 import net.fabricmc.tinyremapper.extension.mixin.common.data.Pair;
 import org.bukkit.plugin.InvalidDescriptionException;
 import org.bukkit.plugin.InvalidPluginException;
@@ -54,19 +55,31 @@ public class PluginLoader {
         return PluginType.NONE;
     }
 
-    public void remapPlugin(Remapper remapper) throws IOException, URISyntaxException {
+    public void remapPlugin(Mappings mappings) throws IOException, URISyntaxException {
+        // Before remapping the jar, you download the intermediary mappings,
+        // generate combined spigot mappings and after that you run the merger,
+        // save the new mapping file and use it to remap from intermediary to spigot instead of to official
+
+        // Avant de remapper le jar, télécharge les mappings intermediary,
+        // générez des mappings spigot combinés et après cela exécute mapping-merger,
+        // enregistrez le nouveau fichier de mapping et utilisez-le pour remapper de l'intermédiaire au spigot au lieu du officiel.
+
         // Remap from intermediary to server obfuscate and put the file as remappedPlugin
-        File remappedPlugin = new File(plugin.getAbsolutePath().replace(".jar", "-remapped.jar"));
+        this.remappedPlugin = new File(plugin.getAbsolutePath().replace(".jar", "-remapped.jar"));
 
         File classpathJar = new File(FileUtils.formatToGoodJarFilePath(cvn.getServer().getClass()));
 
-        remapper.remapJarFromIntermediary(
+        mappings.remapJarFromIntermediary(
                 classpathJar.toPath(),
                 plugin,
-                remappedPlugin
+                remappedPlugin,
+                Mappings.Namespace.INTERMEDIARY,
+                Mappings.Namespace.SPIGOT
         );
 
-        this.remappedPlugin = FileUtils.jarToCVNJar(cvn, remappedPlugin);
+        MappingMerger.map();
+
+        FileUtils.jarToCVNJar(cvn, remappedPlugin);
 
         Pair<Map<File, String>, File> mapFilePair = FileUtils.remapCraftBukkitImports(cvn, remappedPlugin);
 
@@ -95,7 +108,7 @@ public class PluginLoader {
     }
 
     /**
-     * Get the remapped plugin created by {@link #remapPlugin(Remapper)}
+     * Get the remapped plugin created by {@link #remapPlugin(Mappings)}
      * @return The remapped plugin file, or null if not remapped yet
      */
     public @Nullable File getRemappedPlugin() {

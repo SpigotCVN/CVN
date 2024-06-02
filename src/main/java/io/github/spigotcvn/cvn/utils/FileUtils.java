@@ -74,7 +74,7 @@ public class FileUtils {
         return jarFile.getAbsolutePath();
     }
 
-    public static File jarToCVNJar(CVN plugin, File remappedPlugin) throws IOException {
+    public static void jarToCVNJar(CVN plugin, File remappedPlugin) throws IOException {
         UUID pluginUuid = UUID.randomUUID();
 
         File cvnJarFolder = new File(plugin.getTempFolder() + "/cvnjar");
@@ -116,9 +116,6 @@ public class FileUtils {
 
         // Delete temp folder
         tempFolder.getParentFile().delete();
-
-        // Return the remapped jar
-        return remappedPlugin;
     }
 
     public static Pair<Map<File, String>, File> remapCraftBukkitImports(CVN plugin, File zipFile) throws IOException {

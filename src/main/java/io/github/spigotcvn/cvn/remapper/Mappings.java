@@ -1,6 +1,8 @@
 package io.github.spigotcvn.cvn.remapper;
 
 import io.github.spigotcvn.cvn.CVN;
+import io.github.spigotcvn.smdownloader.SpigotMappingsDownloader;
+import io.github.spigotcvn.smdownloader.mappings.MappingFile;
 import net.fabricmc.tinyremapper.NonClassCopyMode;
 import net.fabricmc.tinyremapper.OutputConsumerPath;
 import net.fabricmc.tinyremapper.TinyRemapper;
@@ -9,10 +11,10 @@ import net.fabricmc.tinyremapper.TinyUtils;
 import java.io.*;
 import java.nio.file.Path;
 
-public class Remapper {
+public class Mappings {
     private final CVN plugin;
 
-    public Remapper(CVN plugin) {
+    public Mappings(CVN plugin) {
         this.plugin = plugin;
     }
 
@@ -21,7 +23,7 @@ public class Remapper {
      * @param jarFile       The jar file to remap
      * @param resultJarFile The file to save the remapped jar to
      */
-    public void remapJarFromIntermediary(Path classpath, File jarFile, File resultJarFile) {
+    public void remapJarFromIntermediary(Path classpath, File jarFile, File resultJarFile, Namespace from, Namespace to) {
         plugin.getLogger().info("Remapping jar to obfuscated mappings...");
 
         File mappingFile = plugin.getMappingFile();
@@ -34,8 +36,8 @@ public class Remapper {
                 .withMappings(
                         TinyUtils.createTinyMappingProvider(
                                 mappingFile.toPath(),
-                                Namespace.INTERMEDIARY.getNamespaceName(),
-                                Namespace.OBFUSCATED.getNamespaceName()
+                                from.getNamespaceName(),
+                                to.getNamespaceName()
                         )
                 )
                 .build();
@@ -58,9 +60,27 @@ public class Remapper {
         }
     }
 
-    private enum Namespace {
+    public void downloadSpigotMappings() {
+        SpigotMappingsDownloader mappinger = new SpigotMappingsDownloader(new File(dir), version);
+        plugin.getLogger().info("Downloading Spigot mappings for version " + version);
+
+        if(!mappinger.isVersionValid()) {
+            throw new IllegalArgumentException("Invalid version: " + version);
+        }
+
+        for (MappingFile file : mappinger.downloadMappings(false)) {
+            if (!file.getFile().exists()) continue;
+            System.out.println(file.getFileType());
+            System.out.println(file.getType());
+            System.out.println(file.getFile().getName());
+            System.out.println();
+        }
+    }
+
+    public enum Namespace {
         INTERMEDIARY("intermediary"),
-        OBFUSCATED("official");
+        OBFUSCATED("official"),
+        SPIGOT("spigot");
 
         final String namespaceName;
 

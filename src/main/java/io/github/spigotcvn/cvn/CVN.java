@@ -1,7 +1,7 @@
 package io.github.spigotcvn.cvn;
 
 import io.github.spigotcvn.cvn.loader.PluginLoader;
-import io.github.spigotcvn.cvn.remapper.Remapper;
+import io.github.spigotcvn.cvn.remapper.Mappings;
 import io.github.spigotcvn.cvn.utils.CompatiblityUtils;
 import io.github.spigotcvn.cvn.utils.FileUtils;
 import io.github.spigotcvn.mappingsdownloader.MappingsDownloader;
@@ -35,7 +35,7 @@ public final class CVN extends JavaPlugin {
 
         getLogger().info("Remapping plugins...");
 
-        Remapper remapper = new Remapper(this);
+        Mappings mappings = new Mappings(this);
 
         File pluginsFolder = new File(getDataFolder().getParent());
 
@@ -46,7 +46,7 @@ public final class CVN extends JavaPlugin {
             if(loader.getPluginType() != PluginLoader.PluginType.CVN) continue;
 
             try {
-                loader.remapPlugin(remapper);
+                loader.remapPlugin(mappings);
             } catch (IOException | URISyntaxException e) {
                 throw new RuntimeException(e);
             }
