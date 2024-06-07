@@ -72,7 +72,7 @@ public class PluginLoader {
                 classpathJar.toPath(),
                 plugin,
                 remappedPlugin,
-                cvn.getCombinedMappingFile(),
+                cvn.getMergedMappingFile(),
                 Mappings.Namespace.INTERMEDIARY,
                 Mappings.Namespace.SPIGOT
         );

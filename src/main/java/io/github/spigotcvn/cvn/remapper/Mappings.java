@@ -1,6 +1,10 @@
 package io.github.spigotcvn.cvn.remapper;
 
 import io.github.spigotcvn.cvn.CVN;
+import io.github.spigotcvn.merger.MappingMerger;
+import io.github.spigotcvn.merger.mappings.InvalidMappingFormatException;
+import io.github.spigotcvn.merger.mappings.files.CSRGMappingFile;
+import io.github.spigotcvn.merger.mappings.files.TinyMappingFile;
 import io.github.spigotcvn.smdownloader.SpigotMappingsDownloader;
 import io.github.spigotcvn.smdownloader.mappings.MappingFile;
 import net.fabricmc.tinyremapper.NonClassCopyMode;
@@ -99,12 +103,38 @@ public class Mappings {
         plugin.setCombinedMappingFile(combined.getFile());
     }
 
+    public void mergeMappings() throws InvalidMappingFormatException {
+        File from = plugin.getCombinedMappingFile();
+        File to = plugin.getTinyMappingFile();
+        File out = plugin.getMergedMappingFile();
+        String namespace = Namespace.SPIGOT.getNamespaceName();
+        CSRGMappingFile fromFile = new CSRGMappingFile();
+        fromFile.loadFromFile(from);
+        TinyMappingFile toFile = new TinyMappingFile();
+        toFile.loadFromFile(to);
+        System.out.println("Merging mappings " + from.getName() + " into " + to.getName() + ".");
+        System.out.println("The process may take a while, please wait...");
+        long start = System.currentTimeMillis();
+        long startMerge = System.currentTimeMillis();
+        MappingMerger.mergeTinyWithCSRG(toFile, fromFile, namespace);
+        long endMerge = System.currentTimeMillis();
+        System.out.println("Merging mappings took " + (endMerge - startMerge) + "ms.");
+        System.out.println("Saving mappings to " + out.getName() + ".");
+        System.out.println("The process may take a while, please wait...");
+        long startSave = System.currentTimeMillis();
+        toFile.saveToFile(out);
+        long endSave = System.currentTimeMillis();
+        System.out.println("Saving mappings took " + (endSave - startSave) + "ms.");
+        long end = System.currentTimeMillis();
+        System.out.println("The whole process took " + (end - start) + "ms.");
+    }
+
     public enum Namespace {
         INTERMEDIARY("intermediary"),
         OBFUSCATED("official"),
         SPIGOT("spigot");
 
-        final String namespaceName;
+        private final String namespaceName;
 
         Namespace(String name) {
             this.namespaceName = name;

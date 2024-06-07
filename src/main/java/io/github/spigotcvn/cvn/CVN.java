@@ -5,6 +5,7 @@ import io.github.spigotcvn.cvn.remapper.Mappings;
 import io.github.spigotcvn.cvn.utils.CompatiblityUtils;
 import io.github.spigotcvn.cvn.utils.FileUtils;
 import io.github.spigotcvn.mappingsdownloader.MappingsDownloader;
+import io.github.spigotcvn.merger.mappings.InvalidMappingFormatException;
 import org.bukkit.plugin.InvalidDescriptionException;
 import org.bukkit.plugin.InvalidPluginException;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -22,8 +23,9 @@ public final class CVN extends JavaPlugin {
     private String buildDataFolder;
     private String mappingsFolder;
 
-    private @Nullable File mappingFile;
+    private @Nullable File tinyMappingFile;
     private @Nullable File combinedMappingFile;
+    private @Nullable File mergedMappingFile;
     private MavenVersion actualVersion;
 
     @Override
@@ -33,14 +35,15 @@ public final class CVN extends JavaPlugin {
         tempFolder = getDataFolder().getAbsolutePath() + "/temp";
         remappedJarsFolder = getDataFolder().getAbsolutePath() + "/rjf";
         buildDataFolder = getDataFolder().getAbsolutePath() + "/bdrf";
-        mappingsFolder = getDataFolder().getAbsolutePath() + "\\mappings";
+        mappingsFolder = getDataFolder().getAbsolutePath() + "/mappings";
+        mergedMappingFile = new File(mappingsFolder + "/merged.tiny");
 
         saveDefaultConfig();
 
         actualVersion = MavenVersion.parse(CompatiblityUtils.getMinecraftVersion());
 
         MappingsDownloader mappingsDownloader = new MappingsDownloader(this, getMappingsFolder(), getActualVersion().getOriginText());
-        mappingFile = mappingsDownloader.tryDownload();
+        tinyMappingFile = mappingsDownloader.tryDownload();
 
         getLogger().info("Remapping plugins...");
 
@@ -49,10 +52,15 @@ public final class CVN extends JavaPlugin {
         File pluginsFolder = new File(getDataFolder().getParent());
 
         mappings.doMappings();
+        try {
+            mappings.mergeMappings();
+        } catch (InvalidMappingFormatException e) {
+            throw new RuntimeException(e);
+        }
 
         Set<File> files = FileUtils.listJarFilesNotRemapped(pluginsFolder);
 
-        if(files == null) throw new RuntimeException("No jar found !");
+        if(files == null) throw new RuntimeException("No jar found in plugins !");
 
         for(File file : files) {
             PluginLoader loader = new PluginLoader(this, file);
@@ -84,8 +92,8 @@ public final class CVN extends JavaPlugin {
         return actualVersion;
     }
 
-    public @Nullable File getMappingFile() {
-        return mappingFile;
+    public @Nullable File getTinyMappingFile() {
+        return tinyMappingFile;
     }
 
     public void setCombinedMappingFile(@Nullable File combinedMappingFile) {
@@ -94,6 +102,10 @@ public final class CVN extends JavaPlugin {
 
     public @Nullable File getCombinedMappingFile() {
         return combinedMappingFile;
+    }
+
+    public @Nullable File getMergedMappingFile() {
+        return mergedMappingFile;
     }
 
     public String getTempFolder() {
