@@ -14,23 +14,32 @@ import org.stianloader.picoresolve.version.MavenVersion;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Set;
 
 public final class CVN extends JavaPlugin {
     private String tempFolder;
+    private String remappedJarsFolder;
+    private String buildDataFolder;
+    private String mappingsFolder;
+
     private @Nullable File mappingFile;
+    private @Nullable File combinedMappingFile;
     private MavenVersion actualVersion;
 
     @Override
     public void onEnable() {
         getLogger().info("Enabled!");
 
-        actualVersion = MavenVersion.parse(CompatiblityUtils.getMinecraftVersion());
+        tempFolder = getDataFolder().getAbsolutePath() + "/temp";
+        remappedJarsFolder = getDataFolder().getAbsolutePath() + "/rjf";
+        buildDataFolder = getDataFolder().getAbsolutePath() + "/bdrf";
+        mappingsFolder = getDataFolder().getAbsolutePath() + "\\mappings";
 
         saveDefaultConfig();
 
-        tempFolder = getDataFolder().getAbsolutePath() + "/temp";
+        actualVersion = MavenVersion.parse(CompatiblityUtils.getMinecraftVersion());
 
-        MappingsDownloader mappingsDownloader = new MappingsDownloader(this, getConfig());
+        MappingsDownloader mappingsDownloader = new MappingsDownloader(this, getMappingsFolder(), getActualVersion().getOriginText());
         mappingFile = mappingsDownloader.tryDownload();
 
         getLogger().info("Remapping plugins...");
@@ -39,7 +48,13 @@ public final class CVN extends JavaPlugin {
 
         File pluginsFolder = new File(getDataFolder().getParent());
 
-        for(File file : FileUtils.listJarFilesNotRemapped(pluginsFolder)) {
+        mappings.doMappings();
+
+        Set<File> files = FileUtils.listJarFilesNotRemapped(pluginsFolder);
+
+        if(files == null) throw new RuntimeException("No jar found !");
+
+        for(File file : files) {
             PluginLoader loader = new PluginLoader(this, file);
 
             // If the plugin isn't a CVN plugin, skip it
@@ -73,7 +88,27 @@ public final class CVN extends JavaPlugin {
         return mappingFile;
     }
 
+    public void setCombinedMappingFile(@Nullable File combinedMappingFile) {
+        this.combinedMappingFile = combinedMappingFile;
+    }
+
+    public @Nullable File getCombinedMappingFile() {
+        return combinedMappingFile;
+    }
+
     public String getTempFolder() {
         return tempFolder;
+    }
+
+    public String getRemappedJarsFolder() {
+        return remappedJarsFolder;
+    }
+
+    public String getBuildDataFolder() {
+        return buildDataFolder;
+    }
+
+    public String getMappingsFolder() {
+        return mappingsFolder;
     }
 }

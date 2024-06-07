@@ -4,7 +4,6 @@ import io.github.spigotcvn.cvn.CVN;
 import io.github.spigotcvn.cvn.remapper.Mappings;
 import io.github.spigotcvn.cvn.utils.FileUtils;
 import io.github.spigotcvn.cvn.utils.JarUtil;
-import io.github.spigotcvn.merger.MappingMerger;
 import net.fabricmc.tinyremapper.extension.mixin.common.data.Pair;
 import org.bukkit.plugin.InvalidDescriptionException;
 import org.bukkit.plugin.InvalidPluginException;
@@ -73,11 +72,10 @@ public class PluginLoader {
                 classpathJar.toPath(),
                 plugin,
                 remappedPlugin,
+                cvn.getCombinedMappingFile(),
                 Mappings.Namespace.INTERMEDIARY,
                 Mappings.Namespace.SPIGOT
         );
-
-        MappingMerger.map();
 
         FileUtils.jarToCVNJar(cvn, remappedPlugin);
 
