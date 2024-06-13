@@ -104,29 +104,18 @@ public class Mappings {
     }
 
     public void mergeMappings() throws InvalidMappingFormatException {
-        File from = plugin.getCombinedMappingFile();
-        File to = plugin.getTinyMappingFile();
-        File out = plugin.getMergedMappingFile();
-        String namespace = Namespace.SPIGOT.getNamespaceName();
         CSRGMappingFile fromFile = new CSRGMappingFile();
-        fromFile.loadFromFile(from);
+        fromFile.loadFromFile(plugin.getCombinedMappingFile());
         TinyMappingFile toFile = new TinyMappingFile();
-        toFile.loadFromFile(to);
-        System.out.println("Merging mappings " + from.getName() + " into " + to.getName() + ".");
-        System.out.println("The process may take a while, please wait...");
+        toFile.loadFromFile(plugin.getTinyMappingFile());
+
+        plugin.getLogger().info("Merging mappings, this process may take a while, please wait...");
         long start = System.currentTimeMillis();
-        long startMerge = System.currentTimeMillis();
-        MappingMerger.mergeTinyWithCSRG(toFile, fromFile, namespace);
-        long endMerge = System.currentTimeMillis();
-        System.out.println("Merging mappings took " + (endMerge - startMerge) + "ms.");
-        System.out.println("Saving mappings to " + out.getName() + ".");
-        System.out.println("The process may take a while, please wait...");
-        long startSave = System.currentTimeMillis();
-        toFile.saveToFile(out);
-        long endSave = System.currentTimeMillis();
-        System.out.println("Saving mappings took " + (endSave - startSave) + "ms.");
-        long end = System.currentTimeMillis();
-        System.out.println("The whole process took " + (end - start) + "ms.");
+
+        MappingMerger.mergeTinyWithCSRG(toFile, fromFile, Namespace.SPIGOT.getNamespaceName());
+        toFile.saveToFile(plugin.getMergedMappingFile());
+
+        plugin.getLogger().info("The whole process took " + (System.currentTimeMillis() - start) + "ms.");
     }
 
     public enum Namespace {
