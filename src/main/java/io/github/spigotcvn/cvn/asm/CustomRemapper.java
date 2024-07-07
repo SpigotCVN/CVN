@@ -22,9 +22,13 @@ public class CustomRemapper extends Remapper {
         if (matcher.matches()) {
             String cbLocation = CompatiblityUtils.getCBOldNotation(plugin);
             System.out.println(cbLocation);
-            System.out.println(internalName.replaceFirst(String.valueOf(internalName.charAt(internalName.indexOf(matcher.group(1))+1)), "").replaceFirst(matcher.group(1), ""));
+            System.out.println(
+                    internalName.replaceFirst(
+                            String.valueOf(internalName.charAt(internalName.indexOf(matcher.group(1))+1)), "")
+                            .replaceFirst(matcher.group(1), "")
+            );
 
-            // TODO : This is not working, rewrite it
+            // FIXME : This is not working, rewrite it
             if(cbLocation == null) return internalName // For 1.20.5+ :
                     .replaceFirst(String.valueOf(
                                     internalName.charAt(internalName.indexOf(matcher.group(1))+1)

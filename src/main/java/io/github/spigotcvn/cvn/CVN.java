@@ -1,23 +1,28 @@
 package io.github.spigotcvn.cvn;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import io.github.spigotcvn.cvn.gson.FileSerializer;
 import io.github.spigotcvn.cvn.loader.PluginLoader;
 import io.github.spigotcvn.cvn.remapper.Mappings;
 import io.github.spigotcvn.cvn.utils.CompatiblityUtils;
 import io.github.spigotcvn.cvn.utils.FileUtils;
-import io.github.spigotcvn.mappingsdownloader.MappingsDownloader;
 import org.bukkit.plugin.InvalidDescriptionException;
 import org.bukkit.plugin.InvalidPluginException;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.jetbrains.annotations.Nullable;
 import org.stianloader.picoresolve.version.MavenVersion;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 
 public final class CVN extends JavaPlugin {
-    private String tempFolder;
-    private @Nullable File mappingFile;
+    public static final Gson GSON = new GsonBuilder()
+            .registerTypeAdapter(File.class, new FileSerializer())
+            .setPrettyPrinting()
+            .create();
+
+    private File cacheFolder;
+    private File remappedFolder;
     private MavenVersion actualVersion;
 
     @Override
@@ -28,37 +33,40 @@ public final class CVN extends JavaPlugin {
 
         saveDefaultConfig();
 
-        tempFolder = getDataFolder().getAbsolutePath() + "/temp";
-
-        MappingsDownloader mappingsDownloader = new MappingsDownloader(this, getConfig());
-        mappingFile = mappingsDownloader.tryDownload();
+        cacheFolder = new File(getDataFolder(), "cache");
+        remappedFolder = new File(getDataFolder(), "remapped");
+        if(!cacheFolder.exists()) cacheFolder.mkdirs();
+        if(!remappedFolder.exists()) remappedFolder.mkdirs();
 
         getLogger().info("Remapping plugins...");
 
         Mappings mappings = new Mappings(this);
-
         File pluginsFolder = new File(getDataFolder().getParent());
+        for(File plugin : pluginsFolder.listFiles()) {
+            if(plugin.isDirectory()) continue;
+            if(!FileUtils.isJar(plugin)) continue;
+            PluginLoader pluginLoader = new PluginLoader(this, plugin);
+            if(pluginLoader.getPluginType() != PluginLoader.PluginType.CVN) continue;
 
-        for(File file : FileUtils.listJarFilesNotRemapped(pluginsFolder)) {
-            PluginLoader loader = new PluginLoader(this, file);
-
-            // If the plugin isn't a CVN plugin, skip it
-            if(loader.getPluginType() != PluginLoader.PluginType.CVN) continue;
+            if(pluginLoader.hasPluginChanged()) {
+                getLogger().info("Remapping " + plugin.getName() + "...");
+                try {
+                    pluginLoader.remapPlugin(mappings);
+                } catch (IOException e) {
+                    getLogger().severe("Could not remap plugin " + plugin.getName() + "!");
+                    getLogger().severe("This plugin will be skipped. Do not report this to the authors of the plugin!");
+                    getLogger().severe("THIS IS A CVN ISSUE!");
+                    e.printStackTrace();
+                }
+            } else pluginLoader.loadRemappedPlugin();
 
             try {
-                loader.remapPlugin(mappings);
-            } catch (IOException | URISyntaxException e) {
-                throw new RuntimeException(e);
-            }
-
-            // Should I really explain what is this?
-            // Hello rad also
-            getLogger().info("Successfully remapped " + file.getName() + " !");
-
-            try {
-                loader.loadPlugin();
-            } catch (InvalidPluginException | InvalidDescriptionException e) {
-                throw new RuntimeException(e);
+                pluginLoader.loadPluginToSpigot();
+            } catch (InvalidDescriptionException | InvalidPluginException e) {
+                getLogger().severe("Could not load plugin " + plugin.getName() + "!");
+                getLogger().severe("Please report to the plugin author!");
+                getLogger().severe("THIS IS NOT A CVN ISSUE!");
+                e.printStackTrace();
             }
         }
 
@@ -69,11 +77,11 @@ public final class CVN extends JavaPlugin {
         return actualVersion;
     }
 
-    public @Nullable File getMappingFile() {
-        return mappingFile;
+    public File getCacheFolder() {
+        return cacheFolder;
     }
 
-    public String getTempFolder() {
-        return tempFolder;
+    public File getRemappedFolder() {
+        return remappedFolder;
     }
 }

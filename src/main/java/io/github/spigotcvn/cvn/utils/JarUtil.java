@@ -12,34 +12,24 @@ public class JarUtil {
              JarOutputStream jos = new JarOutputStream(fos)) {
 
             // Iterate over all files in the unarchive directory and add them to the JAR
-            iterateOverFiles(file -> {
+            FileUtils.iterateOverFiles(file -> {
                 try {
                     String entryName = unarchiveDir.toPath()
                             .relativize(file.toPath())
                             .toString()
-                            .replaceAll("\\" + File.separator, "/");
+                            .replace(File.separator, "/");
                     System.out.println(entryName);
                     JarEntry entry = new JarEntry(entryName);
                     jos.putNextEntry(entry);
                     Files.copy(file.toPath(), jos);
                     jos.closeEntry();
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new UncheckedIOException(e);
                 }
             }, unarchiveDir);
         }
 
-        iterateOverFiles(File::delete, unarchiveDir);
+        FileUtils.iterateOverFiles(File::delete, unarchiveDir);
         unarchiveDir.delete();
-    }
-
-    public static void iterateOverFiles(Consumer<File> consumer, File dir) {
-        for (File file : dir.listFiles()) {
-            if (file.isDirectory()) {
-                iterateOverFiles(consumer, file);
-            } else {
-                consumer.accept(file);
-            }
-        }
     }
 }

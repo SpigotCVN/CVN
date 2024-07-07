@@ -3,31 +3,39 @@ package io.github.spigotcvn.cvn.utils;
 import io.github.spigotcvn.cvn.CVN;
 import io.github.spigotcvn.cvn.asm.AsmWriter;
 import io.github.spigotcvn.cvn.asm.CustomRemapper;
-import net.fabricmc.tinyremapper.extension.mixin.common.data.Pair;
-import net.lingala.zip4j.ZipFile;
-import net.lingala.zip4j.model.ZipParameters;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 public class FileUtils {
-    public static Set<File> listJarFilesNotRemapped(File directory) {
-        if(!directory.isDirectory()) return null;
+    /**
+     * List all jar files that are not remapped in a directory
+     * @param directory The directory to search in
+     * @return A set of jar files that are not remapped
+     */
+    public static Set<File> listJarFiles(File directory) {
+        if(!directory.isDirectory()) return new HashSet<>();
 
         File[] files = directory.listFiles();
 
-        if(files == null) return null;
+        if(files == null) return new HashSet<>();
 
         return Stream.of(files)
                 .filter(FileUtils::isJar)
-                .filter(FileUtils::isNotRemapped)
                 .collect(Collectors.toSet());
     }
 
@@ -55,10 +63,6 @@ public class FileUtils {
         return file.isFile() && FilenameUtils.getExtension(file.getName()).equals("jar");
     }
 
-    public static boolean isNotRemapped(File file) {
-        return file.isFile() && !file.getName().contains("- remapped");
-    }
-
     public static boolean isClass(File file) {
         return file.isFile() && FilenameUtils.getExtension(file.getName()).equals("class");
     }
@@ -74,74 +78,109 @@ public class FileUtils {
         return jarFile.getAbsolutePath();
     }
 
-    public static void jarToCVNJar(CVN plugin, File remappedPlugin) throws IOException {
-        UUID pluginUuid = UUID.randomUUID();
-
-        File cvnJarFolder = new File(plugin.getTempFolder() + "/cvnjar");
-
-        Files.createDirectories(Paths.get(cvnJarFolder.getAbsolutePath()));
-
-        // Edit from cvn-plugin.yml to plugin.yml
-        ZipFile zipFile = new ZipFile(remappedPlugin);
-        // Remove the base fake
-        zipFile.removeFile("plugin.yml");
-
-        // Create temp manager
-        File tempFolder = new File(cvnJarFolder.getAbsolutePath() + "/cvn-" + pluginUuid);
-
-        // Extract cvn-plugin.yml to temp folder
-        zipFile.extractFile("cvn-plugin.yml", tempFolder.getAbsolutePath());
-
-        // Get the extracted cvn-plugin.yml
-        File tempPlugin = new File(tempFolder.getAbsolutePath() + "/cvn-plugin.yml");
-
-        // Edit name to a "CVN implementation"
-        YamlConfiguration yamlConfiguration = YamlConfiguration.loadConfiguration(tempPlugin);
-        yamlConfiguration.set("name", yamlConfiguration.get("name") + "-CVN");
-
-        // Add CVN as dependency
-        List<String> depends = yamlConfiguration.getStringList("depend");
-
-        if(!depends.contains("CVN")) depends.add("CVN");
-        yamlConfiguration.set("depend", depends);
-
-        // Save temp cvn-plugin.yml
-        yamlConfiguration.save(tempPlugin);
-
-        // Add the cvn-plugin.yml to the final jar as plugin.yml
-        ZipParameters parameters = new ZipParameters();
-        parameters.setFileNameInZip("plugin.yml");
-
-        zipFile.addFile(tempPlugin, parameters);
-
-        // Delete temp folder
-        tempFolder.getParentFile().delete();
-    }
-
-    public static Pair<Map<File, String>, File> remapCraftBukkitImports(CVN plugin, File zipFile) throws IOException {
+    public static Map<File, String> remapCraftBukkitImports(CVN plugin, File zipFile, File asmDir) throws IOException {
         plugin.getLogger().info("Mapping CraftBukkit imports...");
-
-        ZipFile zip = new ZipFile(zipFile);
-
-        // Get the extract folder
-        File extractFolder = new File(plugin.getTempFolder() + "/asm-remap");
-
-        // Create it if it doesn't exist
-        Files.createDirectories(Paths.get(extractFolder.getAbsolutePath()));
-
-        // Extract the zip file
-        zip.extractAll(extractFolder.getAbsolutePath());
-
         Map<File, String> fileStringMap = new HashMap<>();
 
-        // Get all the class files
-        List<File> files = FileUtils.getClassFiles(extractFolder);
+        try(ZipFile zip = new JarFile(zipFile)) {
+            // Create it if it doesn't exist
+            Files.createDirectories(Paths.get(asmDir.getAbsolutePath()));
 
-        for(File file : files) {
-            CustomRemapper remapper = new CustomRemapper(plugin);
-            fileStringMap.put(file, AsmWriter.writeAsm(file, remapper));
+            // Extract the zip file
+            FileUtils.extractAll(zip, asmDir);
+
+            // Get all the class files
+            List<File> files = FileUtils.getClassFiles(asmDir);
+
+            for (File file : files) {
+                CustomRemapper remapper = new CustomRemapper(plugin);
+                fileStringMap.put(file, AsmWriter.writeAsm(file, remapper));
+            }
         }
 
-        return Pair.of(fileStringMap, extractFolder);
+        return fileStringMap;
+    }
+
+    public static List<File> extractAll(ZipFile zip, File directory) {
+        List<File> extractedFiles = new ArrayList<>();
+        Enumeration<? extends ZipEntry> entries = zip.entries();
+        while (entries.hasMoreElements()) {
+            ZipEntry entry = entries.nextElement();
+            File entryDestination = new File(directory, entry.getName());
+            if(entryDestination.getParentFile() != null) entryDestination.getParentFile().mkdirs();
+            if (entry.isDirectory()) {
+                entryDestination.mkdirs();
+            } else {
+                try (InputStream in = zip.getInputStream(entry);
+                     OutputStream out = new BufferedOutputStream(Files.newOutputStream(entryDestination.toPath(), StandardOpenOption.CREATE))) {
+                    byte[] buffer = new byte[1024];
+                    int len;
+                    while ((len = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, len);
+                    }
+                    out.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                extractedFiles.add(entryDestination);
+            }
+        }
+        return extractedFiles;
+    }
+
+    public static void unCVNifyPlugin(File unpackedDir) {
+        File pluginYml = new File(unpackedDir, "plugin.yml");
+        if(pluginYml.exists()) {
+            FileConfiguration config = YamlConfiguration.loadConfiguration(pluginYml);
+            File mainClassPath = new File(config.getString("main").replace(".", File.separator) + ".class");
+            if(mainClassPath.exists()) {
+                mainClassPath.delete();
+            }
+            pluginYml.delete();
+        }
+        File cvnPluginYml = new File(unpackedDir, "cvn-plugin.yml");
+        if(!cvnPluginYml.exists()) throw new IllegalStateException("The plugin is not a CVN plugin!");
+
+        cvnPluginYml.renameTo(pluginYml);
+    }
+
+    public static String getHash(File file) {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        try {
+            try (InputStream is = new FileInputStream(file)) {
+                byte[] buffer = new byte[1024];
+                int read;
+                while ((read = is.read(buffer)) != -1) {
+                    os.write(buffer, 0, read);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        MessageDigest md;
+        try {
+             md = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        byte[] hash = md.digest(os.toByteArray());
+        StringBuilder sb = new StringBuilder();
+        for (byte b : hash) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
+    }
+
+    public static void iterateOverFiles(Consumer<File> consumer, File dir) {
+        for (File file : dir.listFiles()) {
+            if (file.isDirectory()) {
+                iterateOverFiles(consumer, file);
+            } else {
+                consumer.accept(file);
+            }
+        }
     }
 }

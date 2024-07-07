@@ -1,21 +1,19 @@
 package io.github.spigotcvn.cvn.loader;
 
 import io.github.spigotcvn.cvn.CVN;
+import io.github.spigotcvn.cvn.gson.JarHashModel;
 import io.github.spigotcvn.cvn.remapper.Mappings;
 import io.github.spigotcvn.cvn.utils.FileUtils;
 import io.github.spigotcvn.cvn.utils.JarUtil;
-import io.github.spigotcvn.merger.MappingMerger;
-import net.fabricmc.tinyremapper.extension.mixin.common.data.Pair;
 import org.bukkit.plugin.InvalidDescriptionException;
 import org.bukkit.plugin.InvalidPluginException;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.Map;
+import java.io.*;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -30,7 +28,6 @@ public class PluginLoader {
     }
 
     public PluginType getPluginType() {
-
         try (JarFile jar = new JarFile(plugin)) {
             JarEntry cvnPluginYaml = jar.getJarEntry("cvn-plugin.yml");
             JarEntry pluginYaml = jar.getJarEntry("plugin.yml");
@@ -48,28 +45,46 @@ public class PluginLoader {
                 return PluginType.CVN;
             }
         } catch (IOException | YAMLException ex) {
-            cvn.getLogger().severe("Cannot read type for " + plugin.getName() + " !");
+            cvn.getLogger().severe("Cannot read type for " + plugin.getName() + "!");
         }
 
         // There is no plugin.yml, neither a cvn-plugin.yml
         return PluginType.NONE;
     }
 
-    public void remapPlugin(Mappings mappings) throws IOException, URISyntaxException {
+    public boolean hasPluginChanged() {
+        File remappedPluginHash = new File(cvn.getRemappedFolder(), plugin.getName() + ".json");
+        if(!remappedPluginHash.exists()) return true;
+
+        JarHashModel jarHashModel;
+        try {
+            jarHashModel = CVN.GSON.fromJson(new FileReader(remappedPluginHash), JarHashModel.class);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        if(jarHashModel == null) return true;
+        return !Objects.equals(jarHashModel.getHash(), FileUtils.getHash(plugin));
+    }
+
+    public void remapPlugin(Mappings mappings) throws IOException {
         // Before remapping the jar, you download the intermediary mappings,
         // generate combined spigot mappings and after that you run the merger,
         // save the new mapping file and use it to remap from intermediary to spigot instead of to official
 
-        // Avant de remapper le jar, télécharge les mappings intermediary,
-        // générez des mappings spigot combinés et après cela exécute mapping-merger,
-        // enregistrez le nouveau fichier de mapping et utilisez-le pour remapper de l'intermédiaire au spigot au lieu du officiel.
-
         // Remap from intermediary to server obfuscate and put the file as remappedPlugin
-        this.remappedPlugin = new File(plugin.getAbsolutePath().replace(".jar", "-remapped.jar"));
+        this.remappedPlugin = new File(cvn.getRemappedFolder(), plugin.getName());
+        File oldPluginHash = new File(cvn.getRemappedFolder(), plugin.getName() + ".json");
 
-        File classpathJar = new File(FileUtils.formatToGoodJarFilePath(cvn.getServer().getClass()));
+        if(!mappings.getClasspathJars().isClasspathJarRemapped()) {
+            cvn.getLogger().info("Remapping classpath jar...");
+            mappings.getClasspathJars().remapClasspathJar();
+            cvn.getLogger().info("Finished remapping classpath jar!");
+        }
+        File classpathJar = mappings.getClasspathJars().getRemappedClasspathJar();
 
-        mappings.remapJarFromIntermediary(
+        File asmDirName = new File(cvn.getCacheFolder(), "asm-remap-" + UUID.randomUUID());
+
+        mappings.remapJar(
                 classpathJar.toPath(),
                 plugin,
                 remappedPlugin,
@@ -77,26 +92,42 @@ public class PluginLoader {
                 Mappings.Namespace.SPIGOT
         );
 
-        MappingMerger.map();
-
-        FileUtils.jarToCVNJar(cvn, remappedPlugin);
-
-        Pair<Map<File, String>, File> mapFilePair = FileUtils.remapCraftBukkitImports(cvn, remappedPlugin);
+        FileUtils.remapCraftBukkitImports(cvn, remappedPlugin, asmDirName);
+        FileUtils.unCVNifyPlugin(asmDirName);
 
         try {
-            JarUtil.repackJar(remappedPlugin, mapFilePair.second());
+            JarUtil.repackJar(remappedPlugin, asmDirName);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
+
+        JarHashModel jarHashModel = new JarHashModel(remappedPlugin, FileUtils.getHash(plugin));
+        try(FileWriter writer = new FileWriter(oldPluginHash)) {
+            String json = CVN.GSON.toJson(jarHashModel);
+            writer.write(json);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
+        FileUtils.iterateOverFiles(
+                File::delete,
+                asmDirName
+        );
+        asmDirName.delete();
     }
 
-    public void loadPlugin() throws InvalidPluginException, InvalidDescriptionException {
+    public void loadRemappedPlugin() {
+        this.remappedPlugin = new File(cvn.getRemappedFolder(), plugin.getName());
+        if(!remappedPlugin.exists()) throw new IllegalStateException("Plugin hasn't been remapped yet!");
+    }
+
+    public void loadPluginToSpigot() throws InvalidPluginException, InvalidDescriptionException {
         if(remappedPlugin == null) throw new InvalidPluginException("You can't load the plugin if it wasn't remapped!");
 
         Plugin loadedPlugin = cvn.getServer().getPluginManager().loadPlugin(remappedPlugin);
         if(loadedPlugin == null) throw new InvalidPluginException("The remapped plugin can't be loaded!");
 
-        cvn.getServer().getPluginManager().enablePlugin(loadedPlugin);
+//        cvn.getServer().getPluginManager().enablePlugin(loadedPlugin);
     }
 
     /**
