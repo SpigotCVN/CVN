@@ -18,7 +18,6 @@ public class JarUtil {
                             .relativize(file.toPath())
                             .toString()
                             .replace(File.separator, "/");
-                    System.out.println(entryName);
                     JarEntry entry = new JarEntry(entryName);
                     jos.putNextEntry(entry);
                     Files.copy(file.toPath(), jos);
@@ -28,8 +27,5 @@ public class JarUtil {
                 }
             }, unarchiveDir);
         }
-
-        FileUtils.iterateOverFiles(File::delete, unarchiveDir);
-        unarchiveDir.delete();
     }
 }

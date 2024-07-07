@@ -79,7 +79,6 @@ public class FileUtils {
     }
 
     public static Map<File, String> remapCraftBukkitImports(CVN plugin, File zipFile, File asmDir) throws IOException {
-        plugin.getLogger().info("Mapping CraftBukkit imports...");
         Map<File, String> fileStringMap = new HashMap<>();
 
         try(ZipFile zip = new JarFile(zipFile)) {

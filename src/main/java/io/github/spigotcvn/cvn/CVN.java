@@ -54,23 +54,27 @@ public final class CVN extends JavaPlugin {
                     pluginLoader.remapPlugin(mappings);
                 } catch (IOException e) {
                     getLogger().severe("Could not remap plugin " + plugin.getName() + "!");
-                    getLogger().severe("This plugin will be skipped. Do not report this to the authors of the plugin!");
-                    getLogger().severe("THIS IS A CVN ISSUE!");
+                    getLogger().severe("This plugin will be skipped");
+                    getLogger().severe("THIS IS LIKELY A CVN ISSUE!");
                     e.printStackTrace();
                 }
-            } else pluginLoader.loadRemappedPlugin();
+            } else {
+                getLogger().info("Plugin " + plugin.getName() + " has not changed, loading remapped plugin...");
+                pluginLoader.loadRemappedPlugin();
+            }
 
             try {
+                getLogger().info("Loading plugin " + plugin.getName() + "...");
                 pluginLoader.loadPluginToSpigot();
             } catch (InvalidDescriptionException | InvalidPluginException e) {
                 getLogger().severe("Could not load plugin " + plugin.getName() + "!");
-                getLogger().severe("Please report to the plugin author!");
-                getLogger().severe("THIS IS NOT A CVN ISSUE!");
+                getLogger().severe("This plugin will be skipped.");
+                getLogger().severe("THIS IS LIKELY NOT A CVN ISSUE!");
                 e.printStackTrace();
             }
         }
 
-        getLogger().info("Finished remapping plugins !");
+        getLogger().info("Finished remapping plugins!");
     }
 
     public MavenVersion getActualVersion() {

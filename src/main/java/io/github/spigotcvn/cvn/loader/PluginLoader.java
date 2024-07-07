@@ -45,7 +45,7 @@ public class PluginLoader {
                 return PluginType.CVN;
             }
         } catch (IOException | YAMLException ex) {
-            cvn.getLogger().severe("Cannot read type for " + plugin.getName() + "!");
+            throw new RuntimeException("Unable to get type for plugin " + plugin.getName(), ex);
         }
 
         // There is no plugin.yml, neither a cvn-plugin.yml
@@ -76,9 +76,7 @@ public class PluginLoader {
         File oldPluginHash = new File(cvn.getRemappedFolder(), plugin.getName() + ".json");
 
         if(!mappings.getClasspathJars().isClasspathJarRemapped()) {
-            cvn.getLogger().info("Remapping classpath jar...");
             mappings.getClasspathJars().remapClasspathJar();
-            cvn.getLogger().info("Finished remapping classpath jar!");
         }
         File classpathJar = mappings.getClasspathJars().getRemappedClasspathJar();
 

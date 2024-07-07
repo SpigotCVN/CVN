@@ -29,14 +29,10 @@ public class Mappings {
      * @param to            The namespace to remap to
      */
     public void remapJar(Path classpath, File jarFile, File resultJarFile, Namespace from, Namespace to) {
-        plugin.getLogger().info("Remapping jar to obfuscated mappings...");
-
         if(!mappingFiles.isFinalMappingFilePresent()) {
             mappingFiles.generateFinalMappingFile();
         }
         File mappingFile = mappingFiles.getFinalMappingFile();
-
-        plugin.getLogger().info("Loaded mappings from: " + mappingFile.getAbsolutePath());
 
         TinyRemapper remapper = TinyRemapper.newRemapper()
                 .withMappings(
@@ -52,22 +48,17 @@ public class Mappings {
         try (OutputConsumerPath outputConsumer = new OutputConsumerPath.Builder(resultJarFile.toPath().toAbsolutePath()).build()) {
             outputConsumer.addNonClassFiles(jarFile.toPath(), NonClassCopyMode.FIX_META_INF, remapper);
 
-            plugin.getLogger().info("Reading inputs from " + jarFile.getAbsolutePath() + "...");
             remapper.readInputs(jarFile.toPath());
             if(classpath != null) {
-                plugin.getLogger().info("Reading classpath from " + classpath.toAbsolutePath() + "...");
                 remapper.readClassPath(classpath);
             }
 
-            plugin.getLogger().info("Remapping jar...");
             remapper.apply(outputConsumer);
         } catch (IOException e) {
-            plugin.getLogger().severe("Could not remap jar file: " + jarFile.getAbsolutePath() + "!");
             throw new UncheckedIOException(e);
         } finally {
             remapper.finish();
         }
-        plugin.getLogger().info("Finished remapping jar from intermediary mappings to: " + resultJarFile.getAbsolutePath());
     }
 
     public ClasspathJars getClasspathJars() {
