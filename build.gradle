@@ -25,9 +25,6 @@ repositories {
 }
 
 dependencies {
-    testImplementation platform('org.junit:junit-bom:5.10.0')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-
     implementation 'net.fabricmc:tiny-remapper:0.10.3+local'
     implementation 'io.github.spigotcvn:mapping-merger:1.0-SNAPSHOT'
     implementation 'io.github.spigotcvn:spigot-mapping-downloader:1.0-SNAPSHOT'
@@ -53,8 +50,4 @@ build {
 
 shadowJar {
     relocate 'org.objectweb.asm', 'io.github.spigotcvn.libs.asm'
-}
-
-test {
-    useJUnitPlatform()
 }
