@@ -2,6 +2,7 @@ package io.github.spigotcvn.cvn.utils;
 
 import java.io.*;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class URLUtil {
@@ -28,7 +29,7 @@ public class URLUtil {
      * @param downloadTo The file to download to
      */
     public static void download(URL url, File downloadTo) {
-        try (OutputStream out = new FileOutputStream(downloadTo)) {
+        try (OutputStream out = Files.newOutputStream(downloadTo.toPath())) {
             download(url, out);
         } catch (IOException e) {
             throw new UncheckedIOException(e);

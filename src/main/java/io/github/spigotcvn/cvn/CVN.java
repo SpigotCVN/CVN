@@ -45,6 +45,7 @@ public final class CVN extends JavaPlugin {
         for(File plugin : pluginsFolder.listFiles()) {
             if(plugin.isDirectory()) continue;
             if(!FileUtils.isJar(plugin)) continue;
+
             PluginLoader pluginLoader = new PluginLoader(this, plugin);
             if(pluginLoader.getPluginType() != PluginLoader.PluginType.CVN) continue;
 

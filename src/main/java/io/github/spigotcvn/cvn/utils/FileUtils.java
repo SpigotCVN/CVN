@@ -146,7 +146,7 @@ public class FileUtils {
     public static String getHash(File file) {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         try {
-            try (InputStream is = new FileInputStream(file)) {
+            try (InputStream is = Files.newInputStream(file.toPath())) {
                 byte[] buffer = new byte[1024];
                 int read;
                 while ((read = is.read(buffer)) != -1) {
