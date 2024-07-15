@@ -62,7 +62,7 @@ public class MappingFiles {
                 List<MappingFile> mappings = smd.downloadMappings(shouldUpdateRepo);
 
                 if (shouldUpdateRepo) {
-                    updateCBRepo(buildDataDir, craftBukkitDir, smd);
+                    updateCBRepo(craftBukkitDir, smd);
                 }
 
                 File cbPom = new File(craftBukkitDir, "pom.xml");
@@ -96,10 +96,10 @@ public class MappingFiles {
         return true;
     }
 
-    private void updateCBRepo(File buildDataDir, File craftBukkitDir, SpigotMappingsDownloader smd) throws Exception {
+    private void updateCBRepo(File craftBukkitDir, SpigotMappingsDownloader smd) throws Exception {
         String cbRev = smd.getVersionData().getRefs().getCraftBukkit();
-        if (buildDataDir.exists() && buildDataDir.isDirectory()) {
-            IOUtils.deleteDirectory(buildDataDir);
+        if (craftBukkitDir.exists() && craftBukkitDir.isDirectory()) {
+            IOUtils.deleteDirectory(craftBukkitDir);
         }
         try (SpigotMappingsDownloader cbSmd = new SpigotMappingsDownloader(
                 craftBukkitDir, plugin.getActualVersion().getOriginText(), "https://hub.spigotmc.org/stash/scm/spigot/craftbukkit.git")) {

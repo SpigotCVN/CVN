@@ -19,7 +19,8 @@ public class ClasspathJars {
     }
 
     public File remapClasspathJar() {
-        File classpathJar = getServerJar();
+        return getServerJar();
+        /*File classpathJar = getServerJar();
         File remappedClasspathJar = new File(plugin.getCacheFolder(), "remapped-classpath.jar");
 
         if(!mappings.getMappingFiles().isFinalMappingFilePresent()) {
@@ -40,19 +41,21 @@ public class ClasspathJars {
             throw new UncheckedIOException(e);
         }
 
-        return remappedClasspathJar;
+        return remappedClasspathJar;*/
     }
 
     public File getRemappedClasspathJar() {
-        File remappedClasspathJar = new File(plugin.getCacheFolder(), "remapped-classpath.jar");
+        return getServerJar();
+        /*File remappedClasspathJar = new File(plugin.getCacheFolder(), "remapped-classpath.jar");
         if(remappedClasspathJar.exists()) {
             return remappedClasspathJar;
         }
-        return null;
+        return null;*/
     }
 
     public boolean isClasspathJarRemapped() {
-        if(didServerJarChange()) return false;
+        return true;
+        /*if(didServerJarChange()) return false;
 
         File remappedClasspathJar = new File(plugin.getCacheFolder(), "remapped-classpath.jar");
         File remappedClasspathJson = new File(plugin.getCacheFolder(), "remapped-classpath.json");
@@ -67,7 +70,7 @@ public class ClasspathJars {
             throw new UncheckedIOException(e);
         }
 
-        return Objects.equals(newHash, oldHash);
+        return Objects.equals(newHash, oldHash);*/
     }
 
     public boolean didServerJarChange() {
