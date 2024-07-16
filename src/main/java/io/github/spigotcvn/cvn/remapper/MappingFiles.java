@@ -8,6 +8,7 @@ import io.github.spigotcvn.merger.mappings.files.TinyMappingFile;
 import io.github.spigotcvn.smdownloader.SpigotMappingsDownloader;
 import io.github.spigotcvn.smdownloader.io.IOUtils;
 import io.github.spigotcvn.smdownloader.json.BuildDataInfo;
+import io.github.spigotcvn.smdownloader.mappings.MapUtil;
 import io.github.spigotcvn.smdownloader.mappings.MappingFile;
 import org.stianloader.picoresolve.version.MavenVersion;
 import org.w3c.dom.Document;
@@ -34,7 +35,7 @@ public class MappingFiles {
         this.plugin = plugin;
         this.mappings = mappings;
         this.finalMappingFile = new File(plugin.getCacheFolder(), "intermediary-class-replaced-" + plugin.getActualVersion().getOriginText() + ".tiny");
-        this.originalMappingFile = new File(plugin.getCacheFolder(), "intermediary-mappings-"  + plugin.getActualVersion().getOriginText() +  ".tiny");
+        this.originalMappingFile = new File(plugin.getCacheFolder(), "intermediary-mappings-" + plugin.getActualVersion().getOriginText() + ".tiny");
     }
 
     public File getOriginalMappingFile() {
@@ -65,16 +66,34 @@ public class MappingFiles {
                     updateCBRepo(craftBukkitDir, smd);
                 }
 
-                File cbPom = new File(craftBukkitDir, "pom.xml");
-                String cbNotation = getCbNotation(cbPom);
-                String nmsPackage = "net/minecraft/server/v" + cbNotation + "/";
+                File spigotMappings = new File(buildDataDir, "mappings/spigot-combined-" + plugin.getActualVersion().getOriginText() + ".csrg");
+                String nmsPackage = "";
+                if(isPreMojmapsVersion()) {
+                    File cbPom = new File(craftBukkitDir, "pom.xml");
+                    String cbNotation = getCbNotation(cbPom);
+                    nmsPackage = "net/minecraft/server/v" + cbNotation + "/";
+
+                    generateCombinedMappings(mappings, spigotMappings);
+                } else {
+                    spigotMappings = mappings.stream()
+                            .filter(m -> m.getType() == MappingFile.MappingType.CLASS)
+                            .findFirst()
+                            .orElseThrow(() -> new IllegalStateException("Class mappings not found"))
+                            .getFile();
+                }
+                System.out.println(spigotMappings.getName());
 
                 File intermediaryMappings = new File(buildDataDir, "intermediary-mappings-" + plugin.getActualVersion().getOriginText() + ".tiny");
                 if (!intermediaryMappings.exists()) {
                     URLUtil.download(url, intermediaryMappings);
                 }
 
-                processIntermediaryMappings(buildDataDir, mappings, nmsPackage, intermediaryMappings);
+                processIntermediaryMappings(
+                        buildDataDir,
+                        nmsPackage,
+                        spigotMappings,
+                        intermediaryMappings
+                );
 
                 if (!finalMappingFile.exists()) {
                     TinyMappingFile intermediaryClass = new TinyMappingFile();
@@ -114,28 +133,46 @@ public class MappingFiles {
         return properties.getElementsByTagName("minecraft_version").item(0).getTextContent();
     }
 
-    private void processIntermediaryMappings(File buildDataDir, List<MappingFile> mappings, String nmsPackage, File intermediaryMappings) throws Exception {
+    private void processIntermediaryMappings(File buildDataDir, String nmsPackage, File spigotMappings, File intermediaryMappings) throws Exception {
         File intermediarySpigotClass = new File(buildDataDir, "intermediary-class-" + plugin.getActualVersion().getOriginText() + ".tiny");
+
         if (!intermediarySpigotClass.exists()) {
             TinyMappingFile intermediary = new TinyMappingFile();
             CSRGMappingFile spigotClass = new CSRGMappingFile();
 
             intermediary.loadFromFile(intermediaryMappings);
-            spigotClass.loadFromFile(mappings.stream()
-                    .filter(m -> m.getType() == MappingFile.MappingType.CLASS)
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalStateException("Class mappings not found"))
-                    .getFile());
+            spigotClass.loadFromFile(spigotMappings);
 
             MappingMerger.mergeTinyWithCSRG(intermediary, spigotClass, "spigot");
             intermediary.saveToFile(intermediarySpigotClass);
 
-            if (!plugin.getActualVersion().isNewerThan(RELOCATED_BEFORE)) {
+            if (isPreMojmapsVersion()) {
                 intermediary.loadFromFile(intermediarySpigotClass);
                 applyPackageMappings(intermediary, nmsPackage);
                 intermediary.saveToFile(intermediarySpigotClass);
             }
         }
+    }
+
+    private boolean isPreMojmapsVersion() {
+        return !plugin.getActualVersion().isNewerThan(RELOCATED_BEFORE);
+    }
+
+    private void generateCombinedMappings(List<MappingFile> mappingFiles, File combinedMappings) throws Exception {
+        File classMappings = mappingFiles.stream()
+                .filter(m -> m.getType() == MappingFile.MappingType.CLASS)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Class mappings not found"))
+                .getFile();
+        File memberMappings = mappingFiles.stream()
+                .filter(m -> m.getType() == MappingFile.MappingType.MEMBERS)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Member mappings not found"))
+                .getFile();
+
+        MapUtil mapUtil = new MapUtil();
+        mapUtil.loadBuk(classMappings);
+        mapUtil.makeCombinedMaps(combinedMappings, memberMappings);
     }
 
     private void applyPackageMappings(TinyMappingFile intermediary, String nmsPackage) throws Exception {
