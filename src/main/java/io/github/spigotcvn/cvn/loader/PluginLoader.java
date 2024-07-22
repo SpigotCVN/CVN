@@ -8,6 +8,7 @@ import io.github.spigotcvn.cvn.utils.JarUtil;
 import org.bukkit.plugin.InvalidDescriptionException;
 import org.bukkit.plugin.InvalidPluginException;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.PluginDescriptionFile;
 import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.error.YAMLException;
 
@@ -122,10 +123,13 @@ public class PluginLoader {
     public void loadPluginToSpigot() throws InvalidPluginException, InvalidDescriptionException {
         if(remappedPlugin == null) throw new InvalidPluginException("You can't load the plugin if it wasn't remapped!");
 
-        Plugin loadedPlugin = cvn.getServer().getPluginManager().loadPlugin(remappedPlugin);
-        if(loadedPlugin == null) throw new InvalidPluginException("The remapped plugin can't be loaded!");
+        PluginDescriptionFile pluginDescription = FileUtils.getPluginDescription(plugin);
 
-//        cvn.getServer().getPluginManager().enablePlugin(loadedPlugin);
+        cvn.getServer().getPluginManager().disablePlugin(cvn.getServer().getPluginManager().getPlugin(pluginDescription.getName()));
+
+        Plugin loadedPlugin = cvn.getServer().getPluginManager().loadPlugin(remappedPlugin);
+
+        if(loadedPlugin == null) throw new InvalidPluginException("The remapped plugin can't be loaded!");
     }
 
     /**

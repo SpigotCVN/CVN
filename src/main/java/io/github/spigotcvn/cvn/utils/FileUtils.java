@@ -3,8 +3,13 @@ package io.github.spigotcvn.cvn.utils;
 import io.github.spigotcvn.cvn.CVN;
 import io.github.spigotcvn.cvn.asm.AsmWriter;
 import io.github.spigotcvn.cvn.asm.CustomRemapper;
+import org.apache.commons.lang.Validate;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.plugin.InvalidDescriptionException;
+import org.bukkit.plugin.PluginDescriptionFile;
+import org.bukkit.plugin.java.JavaPluginLoader;
+import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.*;
 import java.net.URISyntaxException;
@@ -15,6 +20,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -179,6 +185,46 @@ public class FileUtils {
                 iterateOverFiles(consumer, file);
             } else {
                 consumer.accept(file);
+            }
+        }
+    }
+
+    /**
+     * Get the java plugin description in plugin.yml from a File instance.<br>
+     * Picked up from {@link JavaPluginLoader#getPluginDescription(File)}
+     */
+    public static PluginDescriptionFile getPluginDescription(File file) throws InvalidDescriptionException {
+        Validate.notNull(file, "File cannot be null");
+
+        JarFile jar = null;
+        InputStream stream = null;
+
+        try {
+            jar = new JarFile(file);
+            JarEntry entry = jar.getJarEntry("plugin.yml");
+
+            if (entry == null) {
+                throw new InvalidDescriptionException(new FileNotFoundException("Jar does not contain plugin.yml"));
+            }
+
+            stream = jar.getInputStream(entry);
+
+            return new PluginDescriptionFile(stream);
+
+        } catch (IOException | YAMLException ex) {
+            throw new InvalidDescriptionException(ex);
+        } finally {
+            if (jar != null) {
+                try {
+                    jar.close();
+                } catch (IOException ignored) {
+                }
+            }
+            if (stream != null) {
+                try {
+                    stream.close();
+                } catch (IOException ignored) {
+                }
             }
         }
     }
