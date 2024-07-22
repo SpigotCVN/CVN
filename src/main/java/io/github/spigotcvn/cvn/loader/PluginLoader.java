@@ -125,7 +125,9 @@ public class PluginLoader {
 
         PluginDescriptionFile pluginDescription = FileUtils.getPluginDescription(plugin);
 
-        cvn.getServer().getPluginManager().disablePlugin(cvn.getServer().getPluginManager().getPlugin(pluginDescription.getName()));
+        Plugin dummyPlugin = cvn.getServer().getPluginManager().getPlugin(pluginDescription.getName());
+
+        if(dummyPlugin.isEnabled()) cvn.getServer().getPluginManager().disablePlugin(dummyPlugin);
 
         Plugin loadedPlugin = cvn.getServer().getPluginManager().loadPlugin(remappedPlugin);
 
