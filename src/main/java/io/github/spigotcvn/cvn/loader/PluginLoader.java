@@ -135,7 +135,7 @@ public class PluginLoader {
     }
 
     /**
-     * Get the plugin involved in this loader
+     * Get the dummy plugin involved in this loader
      * @return the plugin file (.jar)
      */
     public File getPlugin() {
