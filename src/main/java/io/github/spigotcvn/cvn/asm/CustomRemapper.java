@@ -17,7 +17,7 @@ public class CustomRemapper extends Remapper {
     @Override
     public String map(String internalName) {
         // TODO : This may not works if the plugin is made with a org.bukkit.craftbukkit.x or net.minecraft.server.x version
-        
+
         Pattern cbPattern = Pattern.compile("org/bukkit/craftbukkit/([^/]+)/.*");
         Matcher cbMatcher = cbPattern.matcher(internalName);
 
