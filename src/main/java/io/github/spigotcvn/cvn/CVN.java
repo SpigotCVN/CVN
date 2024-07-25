@@ -24,12 +24,14 @@ public final class CVN extends JavaPlugin {
     private File cacheFolder;
     private File remappedFolder;
     private MavenVersion actualVersion;
+    private String cbLocation;
 
     @Override
     public void onEnable() {
         getLogger().info("Enabled!");
 
         actualVersion = MavenVersion.parse(CompatiblityUtils.getMinecraftVersion());
+        cbLocation = CompatiblityUtils.getCBOldNotation(this);
 
         saveDefaultConfig();
 
@@ -80,6 +82,10 @@ public final class CVN extends JavaPlugin {
 
     public MavenVersion getActualVersion() {
         return actualVersion;
+    }
+
+    public String getCbLocation() {
+        return cbLocation;
     }
 
     public File getCacheFolder() {

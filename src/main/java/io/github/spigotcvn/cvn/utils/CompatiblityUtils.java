@@ -64,4 +64,12 @@ public class CompatiblityUtils {
         MavenVersion cbRelocated = MavenVersion.parse("1.20.5");
         return plugin.getActualVersion().isNewerThan(cbRelocated) && isPaperBased();
     }
+
+    /**
+     * Check if the server is after 1.16.5 for nms package location.
+     */
+    public static boolean isNewNMSPackages(CVN plugin) {
+        MavenVersion nmsRelocated = MavenVersion.parse("1.16.5");
+        return plugin.getActualVersion().isNewerThan(nmsRelocated);
+    }
 }

@@ -16,21 +16,42 @@ public class CustomRemapper extends Remapper {
 
     @Override
     public String map(String internalName) {
-        Pattern pattern = Pattern.compile("org/bukkit/craftbukkit/([^/]+)/.*");
-        Matcher matcher = pattern.matcher(internalName);
+        // TODO : This may not works if the plugin is made with a org.bukkit.craftbukkit.x or net.minecraft.server.x version
+        
+        Pattern cbPattern = Pattern.compile("org/bukkit/craftbukkit/([^/]+)/.*");
+        Matcher cbMatcher = cbPattern.matcher(internalName);
 
-        if (matcher.matches()) {
-            String cbLocation = CompatiblityUtils.getCBOldNotation(plugin);
+        Pattern nmsPattern = Pattern.compile("net/minecraft/server/([^/]+)/.*");
+        Matcher nmsMatcher = nmsPattern.matcher(internalName);
 
-            // FIXME : This is not working, rewrite it
-            if(cbLocation == null) return internalName // For 1.20.5+ :
-                    .replaceFirst(String.valueOf(
-                                    internalName.charAt(internalName.indexOf(matcher.group(1))+1)
-                    ), "") // Remove point after CB package notation
-                    .replaceFirst(matcher.group(1), ""); // Remove cb notation
+        if (cbMatcher.matches()) {
 
-            return internalName.replaceFirst(matcher.group(1), cbLocation);
+            // This is CB
+            // If the cb naming couldn't be found, relocate to new naming
+            if(plugin.getCbLocation() == null) return relocate(internalName);
+
+            // Replace plugin's cb naming by server's cb naming
+            return internalName.replaceFirst(cbMatcher.group(1), plugin.getCbLocation());
+
+        } else if (nmsMatcher.matches()) {
+
+            // This is NMS
+
+            // If the server is running on 1.17+, or the cb naming couldn't be found
+            if(CompatiblityUtils.isNewNMSPackages(plugin) || plugin.getCbLocation() == null) return relocate(internalName);
+
+            // Replace plugin's nms naming by server's nms naming
+            return internalName.replaceFirst(nmsMatcher.group(1), plugin.getCbLocation());
+
         }
+
         return internalName;
+
+    }
+
+    private String relocate(String internalName) {
+        // TODO : Make it more precise
+        return internalName
+                .replaceAll("/v[^/]+/", "/"); // Remove vX_XX_X notation
     }
 }
